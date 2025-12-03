@@ -1,9 +1,11 @@
 ﻿@page "/appusers/delete"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
 
+@attribute [Authorize(Roles = "Administrator")]
 <PageTitle>Delete</PageTitle>
 
 <h1>Delete</h1>

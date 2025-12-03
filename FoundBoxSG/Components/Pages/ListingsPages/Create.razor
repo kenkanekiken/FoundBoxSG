@@ -1,4 +1,5 @@
 ﻿@page "/listings/create"
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
@@ -59,31 +60,16 @@
                 <label for="image" class="form-label">Image:</label> 
                 <InputText id="image" @bind-Value="Listings.Image" class="form-control" /> 
                 <ValidationMessage For="() => Listings.Image" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datemodified" class="form-label">DateModified:</label> 
-                <InputDate id="datemodified" @bind-Value="Listings.DateModified" class="form-control" /> 
-                <ValidationMessage For="() => Listings.DateModified" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
+            </div>               
+            <div class="mb-3" hidden>
                 <label for="createdby" class="form-label">CreatedBy:</label> 
                 <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" /> 
                 <ValidationMessage For="() => Listings.CreatedBy" class="text-danger" /> 
             </div>        
-            <div class="mb-3">
+            <div class="mb-3" hidden>
                 <label for="modifiedby" class="form-label">ModifiedBy:</label> 
                 <InputText id="modifiedby" @bind-Value="Listings.ModifiedBy" class="form-control" /> 
                 <ValidationMessage For="() => Listings.ModifiedBy" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datecreated" class="form-label">DateCreated:</label> 
-                <InputDate id="datecreated" @bind-Value="Listings.DateCreated" class="form-control" /> 
-                <ValidationMessage For="() => Listings.DateCreated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datemodified" class="form-label">DateModified:</label> 
-                <InputDate id="datemodified" @bind-Value="Listings.DateModified" class="form-control" /> 
-                <ValidationMessage For="() => Listings.DateModified" class="text-danger" /> 
             </div>        
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
@@ -98,12 +84,34 @@
     [SupplyParameterFromForm]
     private Listings Listings { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+
     private async Task AddListings()
     {
         using var context = DbFactory.CreateDbContext();
+
+        //Set the userId to the CreatedBy and UpdatedBy fields
+        Listings.CreatedBy = userId;
+        Listings.ModifiedBy = userId;
+        //Set the DateCreated and DateModified fields to current date and time
+        Listings.DateCreated = DateTime.Now;
+        Listings.DateModified = DateTime.Now;
+
         context.Listings.Add(Listings);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/listings");
+    }
+
+    private string userId = "System"; // Replace with actual user identification logic
+
+    @inject AuthenticationStateProvider authenticationStateProvider
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userIdClaim = user.FindFirst("userId");
+        if (userIdClaim != null)
+        {
+            userId = userIdClaim.Value;
+        }
     }
 }

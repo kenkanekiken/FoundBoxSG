@@ -1,10 +1,14 @@
 ﻿@page "/matches"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using FoundBoxSG.Domain
 @using FoundBoxSG.Data
 @implements IAsyncDisposable
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject AuthenticationStateProvider authenticationStateProvider
+@rendermode InteractiveServer
 
 <PageTitle>Index</PageTitle>
 
@@ -14,13 +18,16 @@
     <a href="matches/create">Create New</a>
 </p>
 
+
+
 <QuickGrid Class="table" Items="context.Matches">
     <PropertyColumn Property="matches => matches.FoundListingId" />
     <PropertyColumn Property="matches => matches.LostListingId" />
-    <PropertyColumn Property="matches => matches.CreatedBy" />
     <PropertyColumn Property="matches => matches.ModifiedBy" />
-    <PropertyColumn Property="matches => matches.DateCreated" />
-    <PropertyColumn Property="matches => matches.DateModified" />
+    <PropertyColumn Property="matches => matches.DateModified" Format="dd/MM/yyyy" />
+    <PropertyColumn Property="matches => matches.CreatedBy" />
+    <PropertyColumn Property="matches => matches.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
+
 
     <TemplateColumn Context="matches">
         <a href="@($"matches/edit?id={matches.Id}")">Edit</a> |
@@ -31,9 +38,25 @@
 
 @code {
     private FoundBoxSGContext context = default!;
+    private string userId = string.Empty;
+    private bool isAdmin = false;
 
-    protected override void OnInitialized()
+    PaginationState paginationState = new PaginationState { ItemsPerPage = 1 };
+    // Filter bookings by userId
+    private IQueryable<Matches> FilteredBookings => isAdmin
+    ? context.Matches // Admins can see all bookings
+    : context.Matches.Where(e => e.CreatedBy == userId); // Regular users see only their own bookings
+
+    protected override async Task OnInitializedAsync()
     {
+        // Fetch the authentication state
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Extract user information
+        userId = user.FindFirst("userId")?.Value ?? string.Empty;
+        isAdmin = user.IsInRole("Administrator");
+
         context = DbFactory.CreateDbContext();
     }
 

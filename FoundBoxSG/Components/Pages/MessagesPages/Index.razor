@@ -1,10 +1,12 @@
 ﻿@page "/messages"
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using FoundBoxSG.Domain
 @using FoundBoxSG.Data
 @implements IAsyncDisposable
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@rendermode InteractiveServer
 
 <PageTitle>Index</PageTitle>
 
@@ -20,9 +22,13 @@
     <PropertyColumn Property="messages => messages.MatchId" />
     <PropertyColumn Property="messages => messages.Content" />
     <PropertyColumn Property="messages => messages.CreatedBy" />
-    <PropertyColumn Property="messages => messages.ModifiedBy" />
-    <PropertyColumn Property="messages => messages.DateCreated" />
-    <PropertyColumn Property="messages => messages.DateModified" />
+    <AuthorizeView Roles="Administrator">
+        <PropertyColumn Property="messages => messages.ModifiedBy" />
+    </AuthorizeView>
+    <PropertyColumn Property="messages => messages.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
+    <AuthorizeView Roles="Administrator">
+        <PropertyColumn Property="messages => messages.DateModified" Format="dd/MM/yyyy" />
+    </AuthorizeView>
 
     <TemplateColumn Context="messages">
         <a href="@($"messages/edit?id={messages.Id}")">Edit</a> |
