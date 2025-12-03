@@ -1,0 +1,134 @@
+﻿@page "/appusers/edit"
+@using Microsoft.EntityFrameworkCore
+@using FoundBoxSG.Domain
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>AppUser</h2>
+<hr />
+@if (AppUser is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="AppUser" OnValidSubmit="UpdateAppUser" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="AppUser.Id" value="@AppUser.Id" />
+                <div class="mb-3">
+                    <label for="username" class="form-label">UserName:</label>
+                    <InputText id="username" @bind-Value="AppUser.UserName" class="form-control" />
+                    <ValidationMessage For="() => AppUser.UserName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="fullname" class="form-label">FullName:</label>
+                    <InputText id="fullname" @bind-Value="AppUser.FullName" class="form-control" />
+                    <ValidationMessage For="() => AppUser.FullName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="gender" class="form-label">Gender:</label>
+                    <InputText id="gender" @bind-Value="AppUser.Gender" class="form-control" />
+                    <ValidationMessage For="() => AppUser.Gender" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="profileimageurl" class="form-label">ProfileImageUrl:</label>
+                    <InputText id="profileimageurl" @bind-Value="AppUser.ProfileImageUrl" class="form-control" />
+                    <ValidationMessage For="() => AppUser.ProfileImageUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="nationality" class="form-label">Nationality:</label>
+                    <InputText id="nationality" @bind-Value="AppUser.Nationality" class="form-control" />
+                    <ValidationMessage For="() => AppUser.Nationality" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="region" class="form-label">Region:</label>
+                    <InputText id="region" @bind-Value="AppUser.Region" class="form-control" />
+                    <ValidationMessage For="() => AppUser.Region" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdby" class="form-label">CreatedBy:</label>
+                    <InputText id="createdby" @bind-Value="AppUser.CreatedBy" class="form-control" />
+                    <ValidationMessage For="() => AppUser.CreatedBy" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="modifiedby" class="form-label">ModifiedBy:</label>
+                    <InputText id="modifiedby" @bind-Value="AppUser.ModifiedBy" class="form-control" />
+                    <ValidationMessage For="() => AppUser.ModifiedBy" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datecreated" class="form-label">DateCreated:</label>
+                    <InputDate id="datecreated" @bind-Value="AppUser.DateCreated" class="form-control" />
+                    <ValidationMessage For="() => AppUser.DateCreated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datemodified" class="form-label">DateModified:</label>
+                    <InputDate id="datemodified" @bind-Value="AppUser.DateModified" class="form-control" />
+                    <ValidationMessage For="() => AppUser.DateModified" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/appusers">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private AppUser? AppUser { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        AppUser ??= await context.AppUser.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (AppUser is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateAppUser()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(AppUser!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!AppUserExists(AppUser!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/appusers");
+    }
+
+    private bool AppUserExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.AppUser.Any(e => e.Id == id);
+    }
+}

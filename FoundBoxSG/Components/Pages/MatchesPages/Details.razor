@@ -1,0 +1,56 @@
+﻿@page "/matches/details"
+@using Microsoft.EntityFrameworkCore
+@using FoundBoxSG.Domain
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Matches</h2>
+    <hr />
+    @if (matches is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">FoundListingId</dt>
+            <dd class="col-sm-10">@matches.FoundListingId</dd>
+            <dt class="col-sm-2">LostListingId</dt>
+            <dd class="col-sm-10">@matches.LostListingId</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@matches.CreatedBy</dd>
+            <dt class="col-sm-2">ModifiedBy</dt>
+            <dd class="col-sm-10">@matches.ModifiedBy</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@matches.DateCreated</dd>
+            <dt class="col-sm-2">DateModified</dt>
+            <dd class="col-sm-10">@matches.DateModified</dd>
+        </dl>
+        <div>
+            <a href="@($"/matches/edit?id={matches.Id}")">Edit</a> |
+            <a href="@($"/matches")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Matches? matches;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        matches = await context.Matches.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (matches is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

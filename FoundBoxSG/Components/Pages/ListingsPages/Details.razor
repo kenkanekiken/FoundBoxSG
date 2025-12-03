@@ -1,0 +1,72 @@
+﻿@page "/listings/details"
+@using Microsoft.EntityFrameworkCore
+@using FoundBoxSG.Domain
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Listings</h2>
+    <hr />
+    @if (listings is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">ListingType</dt>
+            <dd class="col-sm-10">@listings.ListingType</dd>
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@listings.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@listings.Description</dd>
+            <dt class="col-sm-2">ItemCategory</dt>
+            <dd class="col-sm-10">@listings.ItemCategory</dd>
+            <dt class="col-sm-2">Brand</dt>
+            <dd class="col-sm-10">@listings.Brand</dd>
+            <dt class="col-sm-2">Location</dt>
+            <dd class="col-sm-10">@listings.Location</dd>
+            <dt class="col-sm-2">UniqueFeatures</dt>
+            <dd class="col-sm-10">@listings.UniqueFeatures</dd>
+            <dt class="col-sm-2">Color</dt>
+            <dd class="col-sm-10">@listings.Color</dd>
+            <dt class="col-sm-2">Image</dt>
+            <dd class="col-sm-10">@listings.Image</dd>
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@listings.DateModified</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@listings.CreatedBy</dd>
+            <dt class="col-sm-2">ModifiedBy</dt>
+            <dd class="col-sm-10">@listings.ModifiedBy</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@listings.DateCreated</dd>
+            <dt class="col-sm-2">DateModified</dt>
+            <dd class="col-sm-10">@listings.DateModified</dd>
+        </dl>
+        <div>
+            <a href="@($"/listings/edit?id={listings.Id}")">Edit</a> |
+            <a href="@($"/listings")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Listings? listings;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        listings = await context.Listings.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (listings is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

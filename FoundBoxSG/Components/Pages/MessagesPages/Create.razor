@@ -1,0 +1,79 @@
+﻿@page "/messages/create"
+@using Microsoft.EntityFrameworkCore
+@using FoundBoxSG.Domain
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Messages</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Messages" OnValidSubmit="AddMessages" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="senderuserid" class="form-label">SenderUserId:</label> 
+                <InputNumber id="senderuserid" @bind-Value="Messages.SenderUserId" class="form-control" /> 
+                <ValidationMessage For="() => Messages.SenderUserId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="receiveruserid" class="form-label">ReceiverUserId:</label> 
+                <InputNumber id="receiveruserid" @bind-Value="Messages.ReceiverUserId" class="form-control" /> 
+                <ValidationMessage For="() => Messages.ReceiverUserId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="matchid" class="form-label">MatchId:</label> 
+                <InputNumber id="matchid" @bind-Value="Messages.MatchId" class="form-control" /> 
+                <ValidationMessage For="() => Messages.MatchId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="content" class="form-label">Content:</label> 
+                <InputText id="content" @bind-Value="Messages.Content" class="form-control" /> 
+                <ValidationMessage For="() => Messages.Content" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdby" class="form-label">CreatedBy:</label> 
+                <InputText id="createdby" @bind-Value="Messages.CreatedBy" class="form-control" /> 
+                <ValidationMessage For="() => Messages.CreatedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="modifiedby" class="form-label">ModifiedBy:</label> 
+                <InputText id="modifiedby" @bind-Value="Messages.ModifiedBy" class="form-control" /> 
+                <ValidationMessage For="() => Messages.ModifiedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datecreated" class="form-label">DateCreated:</label> 
+                <InputDate id="datecreated" @bind-Value="Messages.DateCreated" class="form-control" /> 
+                <ValidationMessage For="() => Messages.DateCreated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datemodified" class="form-label">DateModified:</label> 
+                <InputDate id="datemodified" @bind-Value="Messages.DateModified" class="form-control" /> 
+                <ValidationMessage For="() => Messages.DateModified" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/messages">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Messages Messages { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddMessages()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Messages.Add(Messages);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/messages");
+    }
+}

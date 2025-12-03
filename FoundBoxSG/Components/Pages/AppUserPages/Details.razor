@@ -1,0 +1,64 @@
+﻿@page "/appusers/details"
+@using Microsoft.EntityFrameworkCore
+@using FoundBoxSG.Domain
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>AppUser</h2>
+    <hr />
+    @if (appuser is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UserName</dt>
+            <dd class="col-sm-10">@appuser.UserName</dd>
+            <dt class="col-sm-2">FullName</dt>
+            <dd class="col-sm-10">@appuser.FullName</dd>
+            <dt class="col-sm-2">Gender</dt>
+            <dd class="col-sm-10">@appuser.Gender</dd>
+            <dt class="col-sm-2">ProfileImageUrl</dt>
+            <dd class="col-sm-10">@appuser.ProfileImageUrl</dd>
+            <dt class="col-sm-2">Nationality</dt>
+            <dd class="col-sm-10">@appuser.Nationality</dd>
+            <dt class="col-sm-2">Region</dt>
+            <dd class="col-sm-10">@appuser.Region</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@appuser.CreatedBy</dd>
+            <dt class="col-sm-2">ModifiedBy</dt>
+            <dd class="col-sm-10">@appuser.ModifiedBy</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@appuser.DateCreated</dd>
+            <dt class="col-sm-2">DateModified</dt>
+            <dd class="col-sm-10">@appuser.DateModified</dd>
+        </dl>
+        <div>
+            <a href="@($"/appusers/edit?id={appuser.Id}")">Edit</a> |
+            <a href="@($"/appusers")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private AppUser? appuser;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        appuser = await context.AppUser.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (appuser is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

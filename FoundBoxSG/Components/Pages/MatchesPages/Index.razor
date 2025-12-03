@@ -1,0 +1,41 @@
+﻿@page "/matches"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using FoundBoxSG.Domain
+@using FoundBoxSG.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="matches/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Matches">
+    <PropertyColumn Property="matches => matches.FoundListingId" />
+    <PropertyColumn Property="matches => matches.LostListingId" />
+    <PropertyColumn Property="matches => matches.CreatedBy" />
+    <PropertyColumn Property="matches => matches.ModifiedBy" />
+    <PropertyColumn Property="matches => matches.DateCreated" />
+    <PropertyColumn Property="matches => matches.DateModified" />
+
+    <TemplateColumn Context="matches">
+        <a href="@($"matches/edit?id={matches.Id}")">Edit</a> |
+        <a href="@($"matches/details?id={matches.Id}")">Details</a> |
+        <a href="@($"matches/delete?id={matches.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private FoundBoxSGContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

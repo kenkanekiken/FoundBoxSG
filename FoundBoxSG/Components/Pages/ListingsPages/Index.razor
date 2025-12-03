@@ -1,0 +1,48 @@
+﻿@page "/listings"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using FoundBoxSG.Domain
+@using FoundBoxSG.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="listings/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Listings">
+    <PropertyColumn Property="listings => listings.ListingType" />
+    <PropertyColumn Property="listings => listings.Title" />
+    <PropertyColumn Property="listings => listings.Description" />
+    <PropertyColumn Property="listings => listings.ItemCategory" />
+    <PropertyColumn Property="listings => listings.Brand" />
+    <PropertyColumn Property="listings => listings.Location" />
+    <PropertyColumn Property="listings => listings.UniqueFeatures" />
+    <PropertyColumn Property="listings => listings.Color" />
+    <PropertyColumn Property="listings => listings.Image" />
+    <PropertyColumn Property="listings => listings.CreatedBy" />
+    <PropertyColumn Property="listings => listings.ModifiedBy" />
+    <PropertyColumn Property="listings => listings.DateCreated" />
+    <PropertyColumn Property="listings => listings.DateModified" />
+
+    <TemplateColumn Context="listings">
+        <a href="@($"listings/edit?id={listings.Id}")">Edit</a> |
+        <a href="@($"listings/details?id={listings.Id}")">Details</a> |
+        <a href="@($"listings/delete?id={listings.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private FoundBoxSGContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
