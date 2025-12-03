@@ -19,6 +19,9 @@ namespace FoundBoxSG.Data
             builder.ApplyConfiguration(new MatchSeed());
             builder.ApplyConfiguration(new MessageSeed());
             builder.ApplyConfiguration(new AppUserSeed());
+            builder.ApplyConfiguration(new RoleSeed());
+            builder.ApplyConfiguration(new UserSeed()); 
+            builder.ApplyConfiguration(new UserRoleSeed());
         }
     }
 }
