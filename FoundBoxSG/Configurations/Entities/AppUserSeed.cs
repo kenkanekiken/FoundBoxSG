@@ -16,7 +16,7 @@ namespace FoundBoxSG.Configurations.Entities
                      ModifiedBy = null,
                      DateCreated = DateTime.Now,
                      DateModified = null,
-                     Gender = "Male",
+                     TotalListings = 1,
                      ProfileImageUrl = null,
                      Nationality = "Singaporean",
                      Region = "Tampines"
@@ -28,7 +28,7 @@ namespace FoundBoxSG.Configurations.Entities
                      ModifiedBy = null,
                      DateCreated = DateTime.Now,
                      DateModified = null,
-                     Gender = "Female",
+                     TotalListings = 1,
                      ProfileImageUrl = null,
                      Nationality = "Singaporean",
                      Region = "Bedok"

@@ -16,17 +16,7 @@
     <div class="col-md-4">
         <EditForm method="post" Model="Matches" OnValidSubmit="AddMatches" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="foundlistingid" class="form-label">FoundListingId:</label> 
-                <InputNumber id="foundlistingid" @bind-Value="Matches.FoundListingId" class="form-control" /> 
-                <ValidationMessage For="() => Matches.FoundListingId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="lostlistingid" class="form-label">LostListingId:</label> 
-                <InputNumber id="lostlistingid" @bind-Value="Matches.LostListingId" class="form-control" /> 
-                <ValidationMessage For="() => Matches.LostListingId" class="text-danger" /> 
-            </div>        
+            <ValidationSummary class="text-danger" role="alert"/>     
             <div class="mb-3" hidden>
                 <label for="createdby" class="form-label">CreatedBy:</label> 
                 <InputText id="createdby" @bind-Value="Matches.CreatedBy" class="form-control" /> 

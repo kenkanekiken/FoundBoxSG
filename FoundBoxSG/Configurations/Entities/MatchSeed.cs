@@ -16,8 +16,8 @@ namespace FoundBoxSG.Configurations.Entities
                     ModifiedBy = null,
                     DateCreated = DateTime.Now,
                     DateModified = null,
-                    FoundListingId = 1,
-                    LostListingId = 2
+                    ListingId = 1,
+                    MatcherUserId = 2,
                 },
                 new Matches
                 {
@@ -26,9 +26,8 @@ namespace FoundBoxSG.Configurations.Entities
                     ModifiedBy = null,
                     DateCreated = DateTime.Now,
                     DateModified = null,
-                    FoundListingId = 3,
-                    LostListingId = 4,
-
+                    ListingId = 2,
+                    MatcherUserId = 1,
                 }
             );
         }
