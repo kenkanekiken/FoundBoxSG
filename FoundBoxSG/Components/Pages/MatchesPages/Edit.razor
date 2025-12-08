@@ -23,16 +23,6 @@ else
                 <ValidationSummary role="alert"/>
                 <input type="hidden" name="Matches.Id" value="@Matches.Id" />
                 <div class="mb-3">
-                    <label for="foundlistingid" class="form-label">FoundListingId:</label>
-                    <InputNumber id="foundlistingid" @bind-Value="Matches.FoundListingId" class="form-control" />
-                    <ValidationMessage For="() => Matches.FoundListingId" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="lostlistingid" class="form-label">LostListingId:</label>
-                    <InputNumber id="lostlistingid" @bind-Value="Matches.LostListingId" class="form-control" />
-                    <ValidationMessage For="() => Matches.LostListingId" class="text-danger" />
-                </div>
-                <div class="mb-3">
                     <label for="createdby" class="form-label">CreatedBy:</label>
                     <InputText id="createdby" @bind-Value="Matches.CreatedBy" class="form-control" />
                     <ValidationMessage For="() => Matches.CreatedBy" class="text-danger" />
