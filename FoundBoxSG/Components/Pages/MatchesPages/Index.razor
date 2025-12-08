@@ -21,8 +21,12 @@
 
 
 <QuickGrid Class="table" Items="context.Matches">
-    <PropertyColumn Property="matches => matches.ModifiedBy" />
-    <PropertyColumn Property="matches => matches.DateModified" Format="dd/MM/yyyy" />
+    <AuthorizeView Roles="Administrator">
+        <PropertyColumn Property="matches => matches.ModifiedBy" />
+    </AuthorizeView>
+    <AuthorizeView Roles="Administrator">
+        <PropertyColumn Property="matches => matches.DateModified" Format="dd/MM/yyyy" />
+    </AuthorizeView>
     <PropertyColumn Property="matches => matches.CreatedBy" />
     <PropertyColumn Property="matches => matches.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
 
