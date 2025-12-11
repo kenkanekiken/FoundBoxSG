@@ -15,6 +15,7 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject RoleManager<IdentityRole> RoleManager
+@inject FoundBoxSGContext DbContext
 
 <PageTitle>Register</PageTitle>
 
@@ -37,6 +38,16 @@
                 <InputText @bind-Value="Input.FullName" class="form-control" autocomplete="fullname" aria-required="true" placeholder="John Doe" />
                 <label for="fullname">FullName</label>
                 <ValidationMessage For="() => Input.FullName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Region" class="form-control" placeholder="Region" />
+                <label for="region">Region</label>
+                <ValidationMessage For="() => Input.Region" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Nationality" class="form-control" placeholder="Nationality" />
+                <label for="nationality">Nationality</label>
+                <ValidationMessage For="() => Input.Nationality" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
                 <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
@@ -91,10 +102,24 @@
         {
             await RoleManager.CreateAsync(new IdentityRole("User"));
         }
-        //add user to the user role
+
         await UserManager.AddToRoleAsync(user, "User");
-        //add the user id as claim when user register
         await UserManager.AddClaimAsync(user, new System.Security.Claims.Claim("userId", user.Id));
+
+        Logger.LogInformation("User created a new account with password.");
+        // Create corresponding AppUser row
+        var appUser = new FoundBoxSG.Domain.AppUser
+        {
+            AspNetUserId = user.Id,
+            Region = Input.Region,
+            Nationality = Input.Nationality,
+            TotalListings = 0,
+            ProfileImageUrl = null
+            // set other defaults if you want
+        };
+
+        DbContext.AppUser.Add(appUser);
+        await DbContext.SaveChangesAsync();
 
         Logger.LogInformation("User created a new account with password.");
 
@@ -150,6 +175,14 @@
         [Required]
         [Display(Name = "FullName")]
         public string FullName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Region")]
+        public string Region { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Nationality")]
+        public string Nationality { get; set; } = "";
 
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
