@@ -2,7 +2,8 @@
 {
     public class Listings : BaseDomainModel
     {
-        public string? ListingType { get; set; }
+        public int UserId { get; set; }
+        public string? ListingType { get; set; } 
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? ItemCategory { get; set; }

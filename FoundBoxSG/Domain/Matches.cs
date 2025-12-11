@@ -2,7 +2,7 @@
 {
     public class Matches : BaseDomainModel
     {
-        public int FoundListingId { get; set; }
-        public int LostListingId { get; set; }
+        public int ListingId { get; set; }
+        public int MatcherUserId { get; set; }
     }
 }

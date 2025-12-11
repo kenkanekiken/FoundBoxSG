@@ -14,22 +14,7 @@
     <div class="col-md-4">
         <EditForm method="post" Model="AppUser" OnValidSubmit="AddAppUser" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="username" class="form-label">UserName:</label> 
-                <InputText id="username" @bind-Value="AppUser.UserName" class="form-control" /> 
-                <ValidationMessage For="() => AppUser.UserName" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="fullname" class="form-label">FullName:</label> 
-                <InputText id="fullname" @bind-Value="AppUser.FullName" class="form-control" /> 
-                <ValidationMessage For="() => AppUser.FullName" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="gender" class="form-label">Gender:</label> 
-                <InputText id="gender" @bind-Value="AppUser.Gender" class="form-control" /> 
-                <ValidationMessage For="() => AppUser.Gender" class="text-danger" /> 
-            </div>        
+            <ValidationSummary class="text-danger" role="alert"/>            
             <div class="mb-3">
                 <label for="profileimageurl" class="form-label">ProfileImageUrl:</label> 
                 <InputText id="profileimageurl" @bind-Value="AppUser.ProfileImageUrl" class="form-control" /> 

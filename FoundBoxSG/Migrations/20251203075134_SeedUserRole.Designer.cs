@@ -4,6 +4,7 @@ using FoundBoxSG.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoundBoxSG.Migrations
 {
     [DbContext(typeof(FoundBoxSGContext))]
-    partial class FoundBoxSGContextModelSnapshot : ModelSnapshot
+    [Migration("20251203075134_SeedUserRole")]
+    partial class SeedUserRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,16 +97,16 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = "3781efa7-66dc-47f0-860f-e506d04102e4",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "923b908b-6c28-4011-9ecc-5e596935e4bc",
+                            ConcurrencyStamp = "c8928f35-6c4e-4cf5-ae35-763360265fbf",
                             Email = "admin@localhost.com",
                             EmailConfirmed = true,
                             FullName = "Admin User",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@LOCALHOST.COM",
                             NormalizedUserName = "ADMIN@LOCALHOST.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEP9Yu+X90wRxe6NZewB7ZN9pjD/wurFDnwMO4lAJlih2+0bnO7sYFpuXPZnwY3ccMQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEF8GpPbbl9YZO/Z/P9ugJkNpYPmELPinCYXxF03LyE0RKt4TDw5SOIdLxYPeOVlGXQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "4d04cd74-a700-486b-aff1-e2f21f41d786",
+                            SecurityStamp = "eb2aa4a5-37b8-42f3-a0e9-7ec161d7d329",
                             TwoFactorEnabled = false,
                             UserName = "admin@localhost.com"
                         });
@@ -117,9 +120,6 @@ namespace FoundBoxSG.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AspNetUserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -128,6 +128,9 @@ namespace FoundBoxSG.Migrations
 
                     b.Property<DateTime?>("DateModified")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("nvarchar(max)");
@@ -141,14 +144,7 @@ namespace FoundBoxSG.Migrations
                     b.Property<string>("Region")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TotalListings")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("AspNetUserId")
-                        .IsUnique()
-                        .HasFilter("[AspNetUserId] IS NOT NULL");
 
                     b.ToTable("AppUser");
 
@@ -157,19 +153,19 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 1,
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(4150),
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9788),
+                            Gender = "Male",
                             Nationality = "Singaporean",
-                            Region = "Tampines",
-                            TotalListings = 1
+                            Region = "Tampines"
                         },
                         new
                         {
                             Id = 2,
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(4156),
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9792),
+                            Gender = "Female",
                             Nationality = "Singaporean",
-                            Region = "Bedok",
-                            TotalListings = 1
+                            Region = "Bedok"
                         });
                 });
 
@@ -220,9 +216,6 @@ namespace FoundBoxSG.Migrations
                     b.Property<string>("UniqueFeatures")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.ToTable("Listings");
@@ -234,29 +227,27 @@ namespace FoundBoxSG.Migrations
                             Brand = "N/A",
                             Color = "Silver and Red",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3393),
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9474),
                             Description = "Set of car keys with a red keychain",
                             ItemCategory = "Keys",
                             ListingType = "Found",
                             Location = "Marina Bay Sands",
                             Title = "Found Keys",
-                            UniqueFeatures = "Red keychain with a smiley face",
-                            UserId = 1
+                            UniqueFeatures = "Red keychain with a smiley face"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = 24,
                             Brand = "Gucci",
                             Color = "Black",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3422),
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9488),
                             Description = "Black leather wallet",
                             ItemCategory = "Wallet",
                             ListingType = "Lost",
                             Location = "Orchard Road",
                             Title = "Lost Wallet",
-                            UniqueFeatures = "Gold emblem",
-                            UserId = 2
+                            UniqueFeatures = "Gold emblem"
                         });
                 });
 
@@ -277,10 +268,10 @@ namespace FoundBoxSG.Migrations
                     b.Property<DateTime?>("DateModified")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ListingId")
+                    b.Property<int>("FoundListingId")
                         .HasColumnType("int");
 
-                    b.Property<int>("MatcherUserId")
+                    b.Property<int>("LostListingId")
                         .HasColumnType("int");
 
                     b.Property<string>("ModifiedBy")
@@ -295,17 +286,17 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 1,
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3739),
-                            ListingId = 1,
-                            MatcherUserId = 2
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9619),
+                            FoundListingId = 1,
+                            LostListingId = 2
                         },
                         new
                         {
                             Id = 2,
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3742),
-                            ListingId = 2,
-                            MatcherUserId = 1
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9621),
+                            FoundListingId = 3,
+                            LostListingId = 4
                         });
                 });
 
@@ -335,6 +326,9 @@ namespace FoundBoxSG.Migrations
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ReceiverUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SenderUserId")
                         .HasColumnType("int");
 
@@ -348,18 +342,20 @@ namespace FoundBoxSG.Migrations
                             Id = 1,
                             Content = "Hello! Is this item still available?",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3894),
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9676),
                             MatchId = 1,
-                            SenderUserId = 2
+                            ReceiverUserId = 2,
+                            SenderUserId = 1
                         },
                         new
                         {
                             Id = 2,
                             Content = "Yes, it is still available. Would you like to arrange a pickup?",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3897),
-                            MatchId = 2,
-                            SenderUserId = 1
+                            DateCreated = new DateTime(2025, 12, 3, 15, 51, 33, 337, DateTimeKind.Local).AddTicks(9678),
+                            MatchId = 1,
+                            ReceiverUserId = 1,
+                            SenderUserId = 2
                         });
                 });
 
@@ -517,15 +513,6 @@ namespace FoundBoxSG.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FoundBoxSG.Domain.AppUser", b =>
-                {
-                    b.HasOne("FoundBoxSG.Data.FoundBoxSGUser", "AspNetUser")
-                        .WithOne("AppUser")
-                        .HasForeignKey("FoundBoxSG.Domain.AppUser", "AspNetUserId");
-
-                    b.Navigation("AspNetUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -575,11 +562,6 @@ namespace FoundBoxSG.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("FoundBoxSG.Data.FoundBoxSGUser", b =>
-                {
-                    b.Navigation("AppUser");
                 });
 #pragma warning restore 612, 618
         }

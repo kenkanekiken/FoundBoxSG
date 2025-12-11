@@ -12,6 +12,7 @@ namespace FoundBoxSG.Configurations.Entities
                 new Listings
                 {
                     Id = 1,
+                    UserId = 1,
                     CreatedBy = "John",
                     ModifiedBy = null,
                     DateCreated = DateTime.Now,
@@ -28,7 +29,8 @@ namespace FoundBoxSG.Configurations.Entities
                 },
                 new Listings
                 {
-                    Id = 24,
+                    Id = 2,
+                    UserId = 2,
                     CreatedBy = "Jane",
                     ModifiedBy = null,
                     DateCreated = DateTime.Now,

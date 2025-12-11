@@ -1,8 +1,10 @@
 ﻿@page "/matches/create"
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
 
 <PageTitle>Create</PageTitle>
 
@@ -14,37 +16,17 @@
     <div class="col-md-4">
         <EditForm method="post" Model="Matches" OnValidSubmit="AddMatches" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="foundlistingid" class="form-label">FoundListingId:</label> 
-                <InputNumber id="foundlistingid" @bind-Value="Matches.FoundListingId" class="form-control" /> 
-                <ValidationMessage For="() => Matches.FoundListingId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="lostlistingid" class="form-label">LostListingId:</label> 
-                <InputNumber id="lostlistingid" @bind-Value="Matches.LostListingId" class="form-control" /> 
-                <ValidationMessage For="() => Matches.LostListingId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
+            <ValidationSummary class="text-danger" role="alert"/>     
+            <div class="mb-3" hidden>
                 <label for="createdby" class="form-label">CreatedBy:</label> 
                 <InputText id="createdby" @bind-Value="Matches.CreatedBy" class="form-control" /> 
                 <ValidationMessage For="() => Matches.CreatedBy" class="text-danger" /> 
             </div>        
-            <div class="mb-3">
+            <div class="mb-3" hidden>
                 <label for="modifiedby" class="form-label">ModifiedBy:</label> 
                 <InputText id="modifiedby" @bind-Value="Matches.ModifiedBy" class="form-control" /> 
                 <ValidationMessage For="() => Matches.ModifiedBy" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datecreated" class="form-label">DateCreated:</label> 
-                <InputDate id="datecreated" @bind-Value="Matches.DateCreated" class="form-control" /> 
-                <ValidationMessage For="() => Matches.DateCreated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datemodified" class="form-label">DateModified:</label> 
-                <InputDate id="datemodified" @bind-Value="Matches.DateModified" class="form-control" /> 
-                <ValidationMessage For="() => Matches.DateModified" class="text-danger" /> 
-            </div>        
+            </div>             
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -62,8 +44,29 @@
     private async Task AddMatches()
     {
         using var context = DbFactory.CreateDbContext();
+
+                //Set the userId to the CreatedBy and UpdatedBy fields
+        Matches.CreatedBy = userId;
+        Matches.ModifiedBy = userId;
+        //Set the DateCreated and DateModified fields to current date and time
+        Matches.DateCreated = DateTime.Now;
+        Matches.DateModified = DateTime.Now;
+
         context.Matches.Add(Matches);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/matches");
+    }
+
+    private string userId = "System"; // Replace with actual user identification logic
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userIdClaim = user.FindFirst("userId");
+        if (userIdClaim != null)
+        {
+            userId = userIdClaim.Value;
+        }
     }
 }

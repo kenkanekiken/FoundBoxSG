@@ -28,11 +28,6 @@ else
                     <ValidationMessage For="() => Messages.SenderUserId" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="receiveruserid" class="form-label">ReceiverUserId:</label>
-                    <InputNumber id="receiveruserid" @bind-Value="Messages.ReceiverUserId" class="form-control" />
-                    <ValidationMessage For="() => Messages.ReceiverUserId" class="text-danger" />
-                </div>
-                <div class="mb-3">
                     <label for="matchid" class="form-label">MatchId:</label>
                     <InputNumber id="matchid" @bind-Value="Messages.MatchId" class="form-control" />
                     <ValidationMessage For="() => Messages.MatchId" class="text-danger" />

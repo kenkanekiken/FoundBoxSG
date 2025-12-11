@@ -18,8 +18,7 @@ namespace FoundBoxSG.Configurations.Entities
                      ModifiedBy = null,
                      DateCreated = DateTime.Now,
                      DateModified = null,
-                     SenderUserId = 1,
-                     ReceiverUserId = 2,
+                     SenderUserId = 2,
                      MatchId = 1,
                      Content = "Hello! Is this item still available?"
                  },
@@ -30,9 +29,8 @@ namespace FoundBoxSG.Configurations.Entities
                      ModifiedBy = null,
                      DateCreated = DateTime.Now,
                      DateModified = null,
-                     SenderUserId = 2,
-                     ReceiverUserId = 1,
-                     MatchId = 1,
+                     SenderUserId = 1,
+                     MatchId = 2,
                      Content = "Yes, it is still available. Would you like to arrange a pickup?",
                  }
              );

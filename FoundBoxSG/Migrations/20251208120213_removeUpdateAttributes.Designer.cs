@@ -4,6 +4,7 @@ using FoundBoxSG.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoundBoxSG.Migrations
 {
     [DbContext(typeof(FoundBoxSGContext))]
-    partial class FoundBoxSGContextModelSnapshot : ModelSnapshot
+    [Migration("20251208120213_removeUpdateAttributes")]
+    partial class removeUpdateAttributes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,16 +97,16 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = "3781efa7-66dc-47f0-860f-e506d04102e4",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "923b908b-6c28-4011-9ecc-5e596935e4bc",
+                            ConcurrencyStamp = "9d08e547-c94c-43ce-b646-72576f427039",
                             Email = "admin@localhost.com",
                             EmailConfirmed = true,
                             FullName = "Admin User",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@LOCALHOST.COM",
                             NormalizedUserName = "ADMIN@LOCALHOST.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEP9Yu+X90wRxe6NZewB7ZN9pjD/wurFDnwMO4lAJlih2+0bnO7sYFpuXPZnwY3ccMQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEJKfbNQZoEGdqAhPCGn6OeL2oNjE/y1MJgNamkPrngqfaSXnx6Fr2lCYEEieCLdjNw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "4d04cd74-a700-486b-aff1-e2f21f41d786",
+                            SecurityStamp = "b83ec5ed-933a-4f31-a39d-4be0a43dab1d",
                             TwoFactorEnabled = false,
                             UserName = "admin@localhost.com"
                         });
@@ -116,9 +119,6 @@ namespace FoundBoxSG.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AspNetUserId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -146,10 +146,6 @@ namespace FoundBoxSG.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AspNetUserId")
-                        .IsUnique()
-                        .HasFilter("[AspNetUserId] IS NOT NULL");
-
                     b.ToTable("AppUser");
 
                     b.HasData(
@@ -157,7 +153,7 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 1,
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(4150),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(7152),
                             Nationality = "Singaporean",
                             Region = "Tampines",
                             TotalListings = 1
@@ -166,7 +162,7 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 2,
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(4156),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(7154),
                             Nationality = "Singaporean",
                             Region = "Bedok",
                             TotalListings = 1
@@ -234,7 +230,7 @@ namespace FoundBoxSG.Migrations
                             Brand = "N/A",
                             Color = "Silver and Red",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3393),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(6884),
                             Description = "Set of car keys with a red keychain",
                             ItemCategory = "Keys",
                             ListingType = "Found",
@@ -249,7 +245,7 @@ namespace FoundBoxSG.Migrations
                             Brand = "Gucci",
                             Color = "Black",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3422),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(6900),
                             Description = "Black leather wallet",
                             ItemCategory = "Wallet",
                             ListingType = "Lost",
@@ -295,7 +291,7 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 1,
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3739),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(7039),
                             ListingId = 1,
                             MatcherUserId = 2
                         },
@@ -303,7 +299,7 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 2,
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3742),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(7042),
                             ListingId = 2,
                             MatcherUserId = 1
                         });
@@ -348,7 +344,7 @@ namespace FoundBoxSG.Migrations
                             Id = 1,
                             Content = "Hello! Is this item still available?",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3894),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(7095),
                             MatchId = 1,
                             SenderUserId = 2
                         },
@@ -357,7 +353,7 @@ namespace FoundBoxSG.Migrations
                             Id = 2,
                             Content = "Yes, it is still available. Would you like to arrange a pickup?",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 11, 22, 2, 33, 595, DateTimeKind.Local).AddTicks(3897),
+                            DateCreated = new DateTime(2025, 12, 8, 20, 2, 12, 257, DateTimeKind.Local).AddTicks(7097),
                             MatchId = 2,
                             SenderUserId = 1
                         });
@@ -517,15 +513,6 @@ namespace FoundBoxSG.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FoundBoxSG.Domain.AppUser", b =>
-                {
-                    b.HasOne("FoundBoxSG.Data.FoundBoxSGUser", "AspNetUser")
-                        .WithOne("AppUser")
-                        .HasForeignKey("FoundBoxSG.Domain.AppUser", "AspNetUserId");
-
-                    b.Navigation("AspNetUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -575,11 +562,6 @@ namespace FoundBoxSG.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("FoundBoxSG.Data.FoundBoxSGUser", b =>
-                {
-                    b.Navigation("AppUser");
                 });
 #pragma warning restore 612, 618
         }

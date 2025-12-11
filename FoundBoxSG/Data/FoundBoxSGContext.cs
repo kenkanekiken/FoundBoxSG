@@ -1,5 +1,6 @@
 ﻿using FoundBoxSG.Configurations.Entities;
 using FoundBoxSG.Data;
+using FoundBoxSG.Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,10 +16,18 @@ namespace FoundBoxSG.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<AppUser>()
+                .HasOne(a => a.AspNetUser)
+                .WithOne(b => b.AppUser)
+                .HasForeignKey<AppUser>(a => a.AspNetUserId)
+                .HasPrincipalKey<FoundBoxSGUser>(u => u.Id);
             builder.ApplyConfiguration(new ListingSeed());
             builder.ApplyConfiguration(new MatchSeed());
             builder.ApplyConfiguration(new MessageSeed());
             builder.ApplyConfiguration(new AppUserSeed());
+            builder.ApplyConfiguration(new RoleSeed());
+            builder.ApplyConfiguration(new UserSeed()); 
+            builder.ApplyConfiguration(new UserRoleSeed());
         }
     }
 }

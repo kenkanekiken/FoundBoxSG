@@ -1,9 +1,11 @@
 ﻿@page "/appusers/delete"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
 
+@attribute [Authorize(Roles = "Administrator")]
 <PageTitle>Delete</PageTitle>
 
 <h1>Delete</h1>
@@ -17,18 +19,6 @@
         <p><em>Loading...</em></p>
     }
     else {
-        <dl class="row">
-            <dt class="col-sm-2">UserName</dt>
-            <dd class="col-sm-10">@appuser.UserName</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">FullName</dt>
-            <dd class="col-sm-10">@appuser.FullName</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Gender</dt>
-            <dd class="col-sm-10">@appuser.Gender</dd>
-        </dl>
         <dl class="row">
             <dt class="col-sm-2">ProfileImageUrl</dt>
             <dd class="col-sm-10">@appuser.ProfileImageUrl</dd>
