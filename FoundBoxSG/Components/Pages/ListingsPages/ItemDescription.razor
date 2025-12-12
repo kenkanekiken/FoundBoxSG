@@ -1,71 +1,4 @@
-﻿@* @using FoundBoxSG.Domain
-@using Microsoft.EntityFrameworkCore
-@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
-
-<!-- Right side -->
-<div class="col-md-9 d-none d-md-block px-5">
-    <h2>Keys with Bulbasaur Keychain</h2>
-    <div>📍 Tampines Mall</div>
-    <small class="text-muted">Posted 1 day ago</small>
-    <div class="pt-2">
-        <button type="button" class="btn btn-dark">Claim item</button>
-    </div>
-    <div class="py-3">Images</div>
-    <div id="carouselExampleDark" class="carousel carousel-dark slide">
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1" aria-label="Slide 2"></button>
-            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2" aria-label="Slide 3"></button>
-        </div>
-        <div class="carousel-inner">
-            <div class="carousel-item active" data-bs-interval="10000">
-                <img src="/LandingWallpaper.png" class="d-block w-100" alt="...">
-                <div class="carousel-caption d-none d-md-block">
-                </div>
-            </div>
-            <div class="carousel-item" data-bs-interval="2000">
-                <img src="/LandingWallpaper.png" class="d-block w-100" alt="...">
-                <div class="carousel-caption d-none d-md-block">
-                </div>
-            </div>
-            <div class="carousel-item">
-                <img src="/LandingWallpaper.png" class="d-block w-100" alt="...">
-                <div class="carousel-caption d-none d-md-block">
-                </div>
-            </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
-    <div class="pt-4">Item description</div>
-    <div class="border"></div>
-    <div class="pt-3">Item ID</div>
-    <div class="fw-bold">ID83320</div>
-    <div class="py-5">
-        I found a set of keys attached to a Bulbasaur keychain near the entrance of Tampines Mall on 6 November 2025, around 5:30 PM.
-
-        The keychain is bright green with Bulbasaur holding a red Pokéball — it really stood out, so I figured someone might be missing it! There are two silver keys attached, one small and one standard-sized. The keys look like they could belong to a house or locker.
-
-        If this sounds like yours, please provide a few details (for example, what the key is for, or if there are any other keychains or tags attached) so I can verify before returning it.
-
-        Hope the owner sees this soon — it’s never fun to lose your keys, especially with a cute Bulbasaur keychain like this!
-    </div>
-</div>
-
-@code {
-    [Parameter] public Listings? Item { get; set; }
-    [Parameter] public IEnumerable<Listings> Listings { get; set; }
-    [Parameter] public EventCallback<Listings> OnSelectItem { get; set; }
-} *@
-
-
-@using FoundBoxSG.Domain
+﻿@using FoundBoxSG.Domain
 
 @if (Item is null)
 {
@@ -81,16 +14,15 @@ else
     <!-- Right side when an item is selected -->
     <div class="col-md-9 d-none d-md-block px-5">
         <h2>@Item.Title</h2>
+        <div class="fw-bold">@Item.ItemCategory</div>
         <div>📍 @Item.Location</div>
         <small class="text-muted">
             Posted @Item.DateCreated
         </small>
 
-        <div class="pt-2">
+        <div class="py-4">
             <button type="button" class="btn btn-dark">Claim item</button>
         </div>
-
-        <div class="py-3">Images</div>
 
         <!-- You can later bind this to Item.ImageUrl or a list of images -->
         <div id="carouselExampleDark" class="carousel carousel-dark slide">
@@ -104,10 +36,16 @@ else
         <div class="pt-4">Item description</div>
         <div class="border"></div>
 
-        <div class="pt-3">Item ID</div>
-        <div class="fw-bold">@Item.Id</div> @* change to your actual key property *@
+        <div class="pt-3 fw-bold">ID: @Item.Id</div>
 
-        <div class="py-5">
+        <div class="pt-3 fw-bold">Brand: @Item.Brand</div>
+
+        <div class="pt-3 fw-bold">Color: @Item.Color</div>
+
+        <div class="pt-3 fw-bold">Unqiue Feature: @Item.UniqueFeatures</div>
+
+        <div class="pt-3 fw-bold">Description:</div>
+        <div class="pt-3 pb-5">
             @Item.Description
         </div>
     </div>

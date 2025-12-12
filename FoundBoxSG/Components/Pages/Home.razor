@@ -1,5 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 @attribute [AllowAnonymous]
 <PageTitle>Home</PageTitle>
 
@@ -7,11 +9,31 @@
     <div class="container-sm w-100 h-25">
         <div class="d-flex flex-column flex-md-row align-items-center justify-content-center pb-2">
             <h4 class="mb-2 mb-md-0 me-md-2">Find your lost item here</h4>
-            <button class="btn btn-dark h-100">Find Lost Item</button>
+            <button class="btn btn-dark h-100" @onclick="HandleFindLostItem">Find Lost Item</button>
         </div>
         <div class="d-flex flex-column flex-md-row align-items-center justify-content-center">
             <h4 class="mb-2 mb-md-0 me-md-2">Return your found item here</h4>
-            <button class="btn btn-dark h-100">Return Found Item</button>
+            <button class="btn btn-dark h-100" @onclick="HandleFindLostItem">Return Found Item</button>
         </div>
     </div>
 </div>
+
+@code {
+    private async Task HandleFindLostItem()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            // User is logged in → redirect to create listing page
+            Nav.NavigateTo("/listings/create");
+        }
+        else
+        {
+            // User is not logged in → redirect to login page
+            Nav.NavigateTo("/Account/Login");
+        }
+    }
+}
+

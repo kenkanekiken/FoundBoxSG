@@ -3,7 +3,7 @@
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 
-<div class="col-12 col-md-3">
+<div class="col-12 col-md-3 overflow-auto" style="max-height: 100vh">
     <h6 class="mb-3 px-3">@Listings.Count() found items</h6>
     @foreach (var item in Listings)
     {
