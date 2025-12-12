@@ -3,7 +3,7 @@
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 
 <div class="container-fluid pt-4">
-    <SearchBar @bind-SearchText="searchText" />
+    <SearchBar @bind-SearchText="searchText" @bind-SearchLocation="searchLocation" />
     <div class="row">
         <SideBar Listings="FilteredListings" OnSelectItem="SelectItem" />
         <ItemDescription Item="SelectedItem"/>
@@ -11,6 +11,7 @@
 </div>
 @code {
     private string searchText = "";
+    private string searchLocation = "";
 
     private List<Listings> AllListings = new();
     private Listings? SelectedItem { get; set; }
@@ -29,10 +30,12 @@
     }
 
     private IEnumerable<Listings> FilteredListings =>
-        string.IsNullOrWhiteSpace(searchText)
-            ? AllListings
-            : AllListings.Where(x =>
-                x.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+            AllListings.Where(x =>
+                (string.IsNullOrWhiteSpace(searchText) ||
+                    x.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(searchLocation) ||
+                    x.Location.Contains(searchLocation, StringComparison.OrdinalIgnoreCase)));
+
 
     private void SelectItem(Listings item)
     {

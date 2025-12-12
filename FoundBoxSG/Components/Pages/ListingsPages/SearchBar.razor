@@ -5,29 +5,24 @@
 <div class="container-fluid">
     <div class="row g-3 pt-5">
         <!-- Search input -->
-        <div class="col-12 col-md-5">
+        <div class="col-12 col-md-6">
             <div class="input-group">
                 <span class="input-group-text">
                     <i class="bi bi-search fs-2"></i>
                 </span>
-                <input type="search" class="form-control" @bind="SearchText" @oninput="OnSearchChanged" autofocus />
+                <input type="search" class="form-control" placeholder="Title" @bind="SearchText" @oninput="OnSearchChanged" autofocus />
                 @* <input type="text" class="form-control" placeholder="Items" aria-label="search"> *@
             </div>
         </div>
 
         <!-- Location input -->
-        <div class="col-12 col-md-5">
+        <div class="col-12 col-md-6">
             <div class="input-group">
                 <span class="input-group-text">
                     <i class="bi bi-pin-map-fill fs-2"></i>
                 </span>
-                <input type="text" class="form-control" placeholder="Location" aria-label="location">
+                <input type="search" class="form-control" placeholder="Location" @bind="SearchLocation" @oninput="OnSearchLocationChanged" autofocus>
             </div>
-        </div>
-
-        <!-- Button -->
-        <div class="col-12 col-md-2 d-grid">
-            <button class="btn btn-dark">Search items</button>
         </div>
     </div>
 </div>
@@ -41,6 +36,7 @@
 
 
 @code {
+    // Search Text Parameter
     [Parameter] public string SearchText { get; set; }
     [Parameter] public EventCallback<string> SearchTextChanged { get; set; }
 
@@ -49,5 +45,15 @@
         var value = e.Value?.ToString() ?? string.Empty;
         SearchText = value;  // to update local component state
         await SearchTextChanged.InvokeAsync(value);  // to tell parent about the change
+    }
+    // Location parameters
+    [Parameter] public string SearchLocation { get; set; }
+    [Parameter] public EventCallback<string> SearchLocationChanged { get; set; }
+
+    private async Task OnSearchLocationChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? string.Empty;
+        SearchLocation = value;  // to update local component state
+        await SearchLocationChanged.InvokeAsync(value);  // to tell parent about the change
     }
 }
