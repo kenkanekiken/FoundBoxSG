@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using FoundBoxSG.Domain;
+using Microsoft.AspNetCore.Identity;
 
 namespace FoundBoxSG.Data
 {
@@ -6,5 +7,7 @@ namespace FoundBoxSG.Data
     public class FoundBoxSGUser : IdentityUser
     {
         public string? FullName { get; set; }
+
+        public virtual AppUser? AppUser { get; set; }
     }
 }
