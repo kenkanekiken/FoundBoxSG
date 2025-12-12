@@ -1,0 +1,53 @@
+﻿@using FoundBoxSG.Domain
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+
+<div class="container-fluid">
+    <div class="row g-3 pt-5">
+        <!-- Search input -->
+        <div class="col-12 col-md-5">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search fs-2"></i>
+                </span>
+                <input type="search" class="form-control" @bind="SearchText" @oninput="OnSearchChanged" autofocus />
+                @* <input type="text" class="form-control" placeholder="Items" aria-label="search"> *@
+            </div>
+        </div>
+
+        <!-- Location input -->
+        <div class="col-12 col-md-5">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-pin-map-fill fs-2"></i>
+                </span>
+                <input type="text" class="form-control" placeholder="Location" aria-label="location">
+            </div>
+        </div>
+
+        <!-- Button -->
+        <div class="col-12 col-md-2 d-grid">
+            <button class="btn btn-dark">Search items</button>
+        </div>
+    </div>
+</div>
+<!--All Filters-->
+<div class="p-3">
+    <button class="d-flex align-items-center text-decoration-none text-dark border-0 bg-transparent">
+        <i class="bi bi-filter fs-2 me-2"></i>
+        <span>All Filters</span>
+    </button>
+</div>
+
+
+@code {
+    [Parameter] public string SearchText { get; set; }
+    [Parameter] public EventCallback<string> SearchTextChanged { get; set; }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? string.Empty;
+        SearchText = value;  // to update local component state
+        await SearchTextChanged.InvokeAsync(value);  // to tell parent about the change
+    }
+}

@@ -12,31 +12,34 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Index</h1>
 
-<p>
-    <a href="matches/create">Create New</a>
-</p>
+<div class="content px-4">
+    <h1>Index</h1>
 
-
-
-<QuickGrid Class="table" Items="context.Matches">
-    <AuthorizeView Roles="Administrator">
-        <PropertyColumn Property="matches => matches.ModifiedBy" />
-    </AuthorizeView>
-    <AuthorizeView Roles="Administrator">
-        <PropertyColumn Property="matches => matches.DateModified" Format="dd/MM/yyyy" />
-    </AuthorizeView>
-    <PropertyColumn Property="matches => matches.CreatedBy" />
-    <PropertyColumn Property="matches => matches.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
+    <p>
+        <a href="matches/create">Create New</a>
+    </p>
 
 
-    <TemplateColumn Context="matches">
-        <a href="@($"matches/edit?id={matches.Id}")">Edit</a> |
-        <a href="@($"matches/details?id={matches.Id}")">Details</a> |
-        <a href="@($"matches/delete?id={matches.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+
+    <QuickGrid Class="table" Items="context.Matches">
+        <AuthorizeView Roles="Administrator">
+            <PropertyColumn Property="matches => matches.ModifiedBy" />
+        </AuthorizeView>
+        <AuthorizeView Roles="Administrator">
+            <PropertyColumn Property="matches => matches.DateModified" Format="dd/MM/yyyy" />
+        </AuthorizeView>
+        <PropertyColumn Property="matches => matches.CreatedBy" />
+        <PropertyColumn Property="matches => matches.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
+
+
+        <TemplateColumn Context="matches">
+            <a href="@($"matches/edit?id={matches.Id}")">Edit</a> |
+            <a href="@($"matches/details?id={matches.Id}")">Details</a> |
+            <a href="@($"matches/delete?id={matches.Id}")">Delete</a>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
 
 @code {
     private FoundBoxSGContext context = default!;

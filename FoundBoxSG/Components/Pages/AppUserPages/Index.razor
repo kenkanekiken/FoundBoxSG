@@ -12,30 +12,31 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Index</h1>
+<div class="content px-4">
+    <h1>Index</h1>
 
-<p>
-    <a href="appusers/create">Create New</a>
-</p>
+    <p>
+        <a href="appusers/create">Create New</a>
+    </p>
 
-<QuickGrid Class="table" Items="context.AppUser">
-    <PropertyColumn Property="appuser => appuser.ProfileImageUrl" />
-    <PropertyColumn Property="appuser => appuser.Nationality" />
-    <PropertyColumn Property="appuser => appuser.Region" />
-    <PropertyColumn Property="appuser => appuser.CreatedBy" />
-    <PropertyColumn Property="appuser => appuser.ModifiedBy" />
-    <PropertyColumn Property="appuser => appuser.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
-    <PropertyColumn Property="appuser => appuser.DateModified" Format="dd/MM/yyyy" />
+    <QuickGrid Class="table" Items="context.AppUser">
+        <PropertyColumn Property="appuser => appuser.ProfileImageUrl" />
+        <PropertyColumn Property="appuser => appuser.Nationality" />
+        <PropertyColumn Property="appuser => appuser.Region" />
+        <PropertyColumn Property="appuser => appuser.CreatedBy" />
+        <PropertyColumn Property="appuser => appuser.ModifiedBy" />
+        <PropertyColumn Property="appuser => appuser.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
+        <PropertyColumn Property="appuser => appuser.DateModified" Format="dd/MM/yyyy" />
 
-    <TemplateColumn Context="appuser">
-        <a href="@($"appusers/edit?id={appuser.Id}")">Edit</a> |
-        <a href="@($"appusers/details?id={appuser.Id}")">Details</a> 
-        <AuthorizeView Roles="Administrator">
-        |  <a href="@($"appusers/delete?id={appuser.Id}")">Delete</a>
-        </AuthorizeView>
-    </TemplateColumn>
-</QuickGrid>
-
+        <TemplateColumn Context="appuser">
+            <a href="@($"appusers/edit?id={appuser.Id}")">Edit</a> |
+            <a href="@($"appusers/details?id={appuser.Id}")">Details</a>
+            <AuthorizeView Roles="Administrator">
+                |  <a href="@($"appusers/delete?id={appuser.Id}")">Delete</a>
+            </AuthorizeView>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
 @code {
     private FoundBoxSGContext context = default!;
 
