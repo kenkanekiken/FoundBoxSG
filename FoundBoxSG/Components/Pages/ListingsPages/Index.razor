@@ -11,50 +11,14 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Index</h1>
-
-<p>
+<div class="content px-4">
     <a href="listings/create">Create New</a>
-</p>
+    <AllitemsContainer />
+</div>
 
-<QuickGrid Class="table" Items="FilteredListings" Pagination="paginationState">
-    <PropertyColumn Property="listings => listings.ListingType" />
-    <PropertyColumn Property="listings => listings.Title" Sortable="true">
-        <ColumnOptions>
-            <div>
-            <input type="search" @bind="searchText" @bind:event="oninput" autofocus/>   
-            </div>
-        </ColumnOptions>
-    </PropertyColumn>
-    <PropertyColumn Property="listings => listings.Description" />
-    <PropertyColumn Property="listings => listings.ItemCategory" />
-    <PropertyColumn Property="listings => listings.Brand" />
-    <PropertyColumn Property="listings => listings.Location" />
-    <PropertyColumn Property="listings => listings.UniqueFeatures" />
-    <PropertyColumn Property="listings => listings.Color" />
-    <PropertyColumn Property="listings => listings.Image" />
-    <PropertyColumn Property="listings => listings.CreatedBy" />
-    <AuthorizeView Roles="Administrator">
-        <PropertyColumn Property="listings => listings.ModifiedBy" />
-    </AuthorizeView>
-    <PropertyColumn Property="listings => listings.DateCreated" Sortable="true" Format="dd/MM/yyyy"/>
-    <AuthorizeView Roles="Administrator">
-        <PropertyColumn Property="listings => listings.DateModified" Format="dd/MM/yyyy" />
-    </AuthorizeView>
-
-    <TemplateColumn Context="listings">
-        <a href="@($"listings/edit?id={listings.Id}")">Edit</a> |
-        <a href="@($"listings/details?id={listings.Id}")">Details</a>
-        <AuthorizeView Roles="Administrator">
-        |  <a href="@($"listings/delete?id={listings.Id}")">Delete</a>
-        </AuthorizeView>
-    </TemplateColumn>
-</QuickGrid>
-
-<Paginator State="paginationState" />
 @code {
     private FoundBoxSGContext context = default!;
-    PaginationState paginationState = new PaginationState { ItemsPerPage = 1 };
+    PaginationState paginationState = new PaginationState { ItemsPerPage = 10 };
     private string searchText = "";
     private IQueryable<Listings> FilteredListings => context.Listings.Where(c =>
     c.Title.Contains(searchText));

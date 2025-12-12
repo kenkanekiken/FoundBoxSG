@@ -11,32 +11,33 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Index</h1>
+<div class="content px-4">
+    <h1>Index</h1>
 
-<p>
-    <a href="messages/create">Create New</a>
-</p>
+    <p>
+        <a href="messages/create">Create New</a>
+    </p>
 
-<QuickGrid Class="table" Items="context.Messages">
-    <PropertyColumn Property="messages => messages.SenderUserId" />
-    <PropertyColumn Property="messages => messages.MatchId" />
-    <PropertyColumn Property="messages => messages.Content" />
-    <PropertyColumn Property="messages => messages.CreatedBy" />
-    <AuthorizeView Roles="Administrator">
-        <PropertyColumn Property="messages => messages.ModifiedBy" />
-    </AuthorizeView>
-    <PropertyColumn Property="messages => messages.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
-    <AuthorizeView Roles="Administrator">
-        <PropertyColumn Property="messages => messages.DateModified" Format="dd/MM/yyyy" />
-    </AuthorizeView>
+    <QuickGrid Class="table" Items="context.Messages">
+        <PropertyColumn Property="messages => messages.SenderUserId" />
+        <PropertyColumn Property="messages => messages.MatchId" />
+        <PropertyColumn Property="messages => messages.Content" />
+        <PropertyColumn Property="messages => messages.CreatedBy" />
+        <AuthorizeView Roles="Administrator">
+            <PropertyColumn Property="messages => messages.ModifiedBy" />
+        </AuthorizeView>
+        <PropertyColumn Property="messages => messages.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
+        <AuthorizeView Roles="Administrator">
+            <PropertyColumn Property="messages => messages.DateModified" Format="dd/MM/yyyy" />
+        </AuthorizeView>
 
-    <TemplateColumn Context="messages">
-        <a href="@($"messages/edit?id={messages.Id}")">Edit</a> |
-        <a href="@($"messages/details?id={messages.Id}")">Details</a> |
-        <a href="@($"messages/delete?id={messages.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
-
+        <TemplateColumn Context="messages">
+            <a href="@($"messages/edit?id={messages.Id}")">Edit</a> |
+            <a href="@($"messages/details?id={messages.Id}")">Details</a> |
+            <a href="@($"messages/delete?id={messages.Id}")">Delete</a>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
 @code {
     private FoundBoxSGContext context = default!;
 

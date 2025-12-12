@@ -1,0 +1,41 @@
+﻿@using FoundBoxSG.Domain
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+
+<div class="container-fluid pt-4">
+    <SearchBar @bind-SearchText="searchText" />
+    <div class="row">
+        <SideBar Listings="FilteredListings" OnSelectItem="SelectItem" />
+        <ItemDescription Item="SelectedItem"/>
+    </div>
+</div>
+@code {
+    private string searchText = "";
+
+    private List<Listings> AllListings = new();
+    private Listings? SelectedItem { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        AllListings = await context.Listings
+            .OrderByDescending(l => l.DateCreated)   // 🔹 newest first
+            .ToListAsync();
+        // Default: show the latest listing
+        if (AllListings.Any())
+        {
+            SelectedItem = AllListings.First(); // show latest listing
+        }
+    }
+
+    private IEnumerable<Listings> FilteredListings =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? AllListings
+            : AllListings.Where(x =>
+                x.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+    private void SelectItem(Listings item)
+    {
+        SelectedItem = item;
+    }
+}

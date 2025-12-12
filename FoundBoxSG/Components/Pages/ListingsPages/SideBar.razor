@@ -1,0 +1,24 @@
+﻿@using FoundBoxSG.Domain
+@using FoundBoxSG.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+
+<div class="col-12 col-md-3">
+    <h6 class="mb-3 px-3">@Listings.Count() found items</h6>
+    @foreach (var item in Listings)
+    {
+        <button class="lost-card mb-3 p-3 rounded text-start w-100 border-0"
+                @onclick="() => OnSelectItem.InvokeAsync(item)">
+            <h5 class="mb-1">@item.Title</h5>
+            <div>📍 @item.Location</div>
+            <div>@item.ItemCategory</div>
+            <small class="text-muted">Posted @item.DateCreated</small>
+        </button>
+    }
+</div>
+
+
+@code {
+    [Parameter] public IEnumerable<Listings> Listings { get; set; }
+    [Parameter] public EventCallback<Listings> OnSelectItem { get; set; }
+}
