@@ -2,7 +2,7 @@
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 
-<div class="container-fluid pt-4">
+<div class="container-fluid pt-1">
     <SearchBar @bind-SearchText="searchText" @bind-SearchLocation="searchLocation" />
     <div class="row">
         <SideBar Listings="FilteredListings" OnSelectItem="SelectItem" />
