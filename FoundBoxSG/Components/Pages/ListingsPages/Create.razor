@@ -1,77 +1,134 @@
 ﻿@page "/listings/create"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
 @using Microsoft.EntityFrameworkCore
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
+@rendermode InteractiveServer
 
 <PageTitle>Create</PageTitle>
 
-<h1>Create</h1>
-
-<h2>Listings</h2>
+<div class="content px-5 py-5">
+<h1>Create Listings</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="Listings" OnValidSubmit="AddListings" FormName="create" Enhance>
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="listingtype" class="form-label">ListingType:</label> 
-                <InputText id="listingtype" @bind-Value="Listings.ListingType" class="form-control" /> 
-                <ValidationMessage For="() => Listings.ListingType" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="title" class="form-label">Title:</label> 
-                <InputText id="title" @bind-Value="Listings.Title" class="form-control" /> 
-                <ValidationMessage For="() => Listings.Title" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="description" class="form-label">Description:</label> 
-                <InputText id="description" @bind-Value="Listings.Description" class="form-control" /> 
+            @if (currentStep == 1)
+                {
+                    <h3> Basic Details: </h3>
+                    <div class="mb-3">
+                        <label class="form-label"> Listing Type:</label>
+                        <InputRadioGroup Name="listingType" @bind-value="Listings.ListingType" class="btn-group">
+                            <InputRadio Name="listingType"
+                            Value="@("Found")"
+                            class="btn-check"
+                            id="listing-found"/>
+                            <label class="btn btn-outline-primary" for="listing-found">
+                                Found
+                            </label>
+                            <InputRadio Name="listingType"
+                            Value="@("Lost")"
+                            class="btn-check"
+                            id="listing-lost"/>
+                            <label class="btn btn-outline-primary" for="listing-lost">
+                                Lost
+                            </label>
+                        </InputRadioGroup>
+
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title:</label> 
+                        <InputText id="title" @bind-Value="Listings.Title" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.Title" class="text-danger" /> 
+                    </div>        
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description:</label> 
+                <InputTextArea id="description" @bind-Value="Listings.Description" class="form-control" rows ="5"/> 
                 <ValidationMessage For="() => Listings.Description" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="itemcategory" class="form-label">ItemCategory:</label> 
-                <InputText id="itemcategory" @bind-Value="Listings.ItemCategory" class="form-control" /> 
-                <ValidationMessage For="() => Listings.ItemCategory" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="brand" class="form-label">Brand:</label> 
-                <InputText id="brand" @bind-Value="Listings.Brand" class="form-control" /> 
-                <ValidationMessage For="() => Listings.Brand" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="location" class="form-label">Location:</label> 
-                <InputText id="location" @bind-Value="Listings.Location" class="form-control" /> 
-                <ValidationMessage For="() => Listings.Location" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="uniquefeatures" class="form-label">UniqueFeatures:</label> 
-                <InputText id="uniquefeatures" @bind-Value="Listings.UniqueFeatures" class="form-control" /> 
-                <ValidationMessage For="() => Listings.UniqueFeatures" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="color" class="form-label">Color:</label> 
-                <InputText id="color" @bind-Value="Listings.Color" class="form-control" /> 
-                <ValidationMessage For="() => Listings.Color" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="image" class="form-label">Image:</label> 
-                <InputText id="image" @bind-Value="Listings.Image" class="form-control" /> 
-                <ValidationMessage For="() => Listings.Image" class="text-danger" /> 
-            </div>               
-            <div class="mb-3" hidden>
-                <label for="createdby" class="form-label">CreatedBy:</label> 
-                <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" /> 
-                <ValidationMessage For="() => Listings.CreatedBy" class="text-danger" /> 
-            </div>        
-            <div class="mb-3" hidden>
-                <label for="modifiedby" class="form-label">ModifiedBy:</label> 
-                <InputText id="modifiedby" @bind-Value="Listings.ModifiedBy" class="form-control" /> 
-                <ValidationMessage For="() => Listings.ModifiedBy" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+            </div> 
+            }
+            @if (currentStep == 2)
+                {
+                    <h3>More Specific Information:</h3>
+                    <div class="mb-3">
+                        <label for="itemcategory" class="form-label">Item Category:</label> 
+                        <InputSelect id="itemcategory" @bind-Value="Listings.ItemCategory" class="form-select"> 
+                            @foreach (string category in Categories)
+                            {
+                                <option value="@category">@category</option>   
+                            }
+
+                        </InputSelect>
+                        <ValidationMessage For="() => Listings.ItemCategory" class="text-danger" /> 
+                    </div>        
+                    <div class="mb-3">
+                        <label for="brand" class="form-label">Brand:</label> 
+                        <InputText id="brand" @bind-Value="Listings.Brand" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.Brand" class="text-danger" /> 
+                    </div>                     
+                    <div class="mb-3">
+                        <label for="uniquefeatures" class="form-label">Unique Features:</label> 
+                        <InputText id="uniquefeatures" @bind-Value="Listings.UniqueFeatures" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.UniqueFeatures" class="text-danger" /> 
+                    </div>        
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color:</label> 
+                        <InputText id="color" @bind-Value="Listings.Color" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.Color" class="text-danger" /> 
+                    </div>
+                }
+                @if (currentStep == 3)
+                
+                {
+                    <h3>Final Step:</h3>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Image:</label> 
+                        <InputText id="image" @bind-Value="Listings.Image" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.Image" class="text-danger" /> 
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Item location:</label>
+                        <InputText id="location" @bind-Value="Listings.Location" class="form-control" />
+                        <ValidationMessage For="() => Listings.Location" class="text-danger" />
+                    </div>
+                    <div class="mb-3" hidden>
+                        <label for="createdby" class="form-label">CreatedBy:</label> 
+                        <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.CreatedBy" class="text-danger" /> 
+                    </div>        
+                    <div class="mb-3" hidden>
+                        <label for="modifiedby" class="form-label">ModifiedBy:</label> 
+                        <InputText id="modifiedby" @bind-Value="Listings.ModifiedBy" class="form-control" /> 
+                        <ValidationMessage For="() => Listings.ModifiedBy" class="text-danger" /> 
+                    </div>   
+                }
+                <hr />
+                <div class="d-flex justify-content-between">
+                    @if (currentStep > 1)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick = "PreviousStep">Back</button>
+                    }
+                    else
+                    {
+                        <div></div>    
+                    }
+                    @if (currentStep < 3)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="NextStep">Next</button>
+                    }
+
+                    @if (currentStep == 3)
+                    {
+                        <button type="submit" class="btn btn-success">Create Listing</button>
+                    }
+
+                </div>
         </EditForm>
     </div>
 </div>
@@ -79,15 +136,54 @@
 <div>
     <a href="/listings">Back to List</a>
 </div>
+</div>
 
 @code {
     [SupplyParameterFromForm]
     private Listings Listings { get; set; } = new();
 
+    private int currentStep = 1;
+
+    private void NextStep()
+    {
+        if (currentStep < 3)
+        {
+            currentStep++;
+            StateHasChanged();
+        }
+    }
+
+    private void PreviousStep()
+    {
+        if (currentStep > 1)
+        {
+            currentStep--;
+            StateHasChanged();
+        }
+    }
+
+    private List<String> Categories = new List<String>
+    {
+         "Phones/Tablets",
+         "Laptops/Electronics",
+         "Keys",
+         "Wallets/Money",
+         "Documents/ID/cards",
+         "Books",
+         "Bags/Luggage",
+         "Clothing/Jewelry/Accessories",
+         "Glasses",
+         "others",
+    };
+
+
+
 
     private async Task AddListings()
     {
         using var context = DbFactory.CreateDbContext();
+
+        int appUserId = await GetAppUserIntIdAsync();
 
         //Set the userId to the CreatedBy and UpdatedBy fields
         Listings.CreatedBy = userId;
@@ -95,6 +191,7 @@
         //Set the DateCreated and DateModified fields to current date and time
         Listings.DateCreated = DateTime.Now;
         Listings.DateModified = DateTime.Now;
+        Listings.UserId = appUserId;
 
         context.Listings.Add(Listings);
         await context.SaveChangesAsync();
@@ -103,9 +200,12 @@
 
     private string userId = "System"; // Replace with actual user identification logic
 
-    @inject AuthenticationStateProvider authenticationStateProvider
     protected override async Task OnInitializedAsync()
     {
+        if (string.IsNullOrEmpty(Listings.ItemCategory))
+        {
+            Listings.ItemCategory = "Phone/Tablets";    
+        }
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         var userIdClaim = user.FindFirst("userId");
@@ -113,5 +213,40 @@
         {
             userId = userIdClaim.Value;
         }
+    }
+
+    // Assuming this code is within a service or repository with access to your DbContext
+    public async Task<int> GetAppUserIdByAspNetIdAsync(string aspNetId)
+    {
+        // Validate the input ID
+        if (string.IsNullOrEmpty(aspNetId))
+        {
+            throw new ArgumentNullException(nameof(aspNetId), "ASP.NET User ID cannot be null or empty.");
+        }
+
+        // Use EF Core to query the AppUser table
+        using (var context = DbFactory.CreateDbContext())
+        {
+            // Use SingleOrDefaultAsync to retrieve the AppUser entity that matches the AspNetUserId
+            // Select only the 'Id' property to keep the query efficient (projection)
+            var appUserId = await context.AppUser // <-- Replace 'Users' with the actual DbSet property name if different
+                .Where(au => au.AspNetUserId == aspNetId)
+                .Select(au => (int?)au.Id)
+                .SingleOrDefaultAsync();
+
+            if (appUserId == null)
+            {
+                // Throw an exception or return a default/sentinel value (e.g., 0 or -1)
+                // depending on how you want to handle a missing user.
+                throw new InvalidOperationException($"No AppUser found for AspNetUserId: {aspNetId}");
+            }
+
+            return appUserId.Value;
+        }
+    }
+
+    public async Task<int> GetAppUserIntIdAsync()
+    {
+        return await GetAppUserIdByAspNetIdAsync(userId);
     }
 }
