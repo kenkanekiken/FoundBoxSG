@@ -25,7 +25,7 @@ namespace FoundBoxSG.Configurations.Entities
                     Location = "Marina Bay Sands",
                     UniqueFeatures = "Red keychain with a smiley face",
                     Color = "Silver and Red",
-                    Image = null
+                    Images = new List<string>()
                 },
                 new Listings
                 {
@@ -43,7 +43,7 @@ namespace FoundBoxSG.Configurations.Entities
                     Location = "Orchard Road",
                     UniqueFeatures = "Gold emblem",
                     Color = "Black",
-                    Image = null
+                    Images = new List<string>()
                 }
             );
         }
