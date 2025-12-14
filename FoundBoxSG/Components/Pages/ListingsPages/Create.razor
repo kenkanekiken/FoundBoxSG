@@ -88,10 +88,22 @@
                 {
                     <h3>Final Step:</h3>
                     <div class="mb-3">
-                        <label for="image" class="form-label">Image:</label> 
-                        <InputText id="image" @bind-Value="Listings.Image" class="form-control" /> 
+                        <label for="image" class="form-label">Upload Image:</label> 
+                        <InputFile id="image" OnChange="@LoadFile" class="form-control" /> 
                         <ValidationMessage For="() => Listings.Image" class="text-danger" /> 
                     </div>
+                    @if (!string.IsNullOrEmpty(imageUri))
+                    {
+                        <div class="mt-2">
+                            <img src="@imageUri" style="max-width: 200px; height: auto" alt="Uploaded Image"/>
+                        </div>
+                    }
+                     @if (!string.IsNullOrEmpty(Listings.Image))
+                    {
+                        <div class="mt-2">
+                            <textarea class ="form-control" rows="3" readonly>@Listings.Image</textarea>
+                        </div>
+                    }
                     <div class="mb-3">
                         <label for="location" class="form-label">Item location:</label>
                         <InputText id="location" @bind-Value="Listings.Location" class="form-control" />
@@ -141,6 +153,29 @@
 @code {
     [SupplyParameterFromForm]
     private Listings Listings { get; set; } = new();
+    public string imageUri;
+    private const int maxFileSize = 512000;
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > maxFileSize)
+        {
+            imageUri = string.Empty;
+            Listings.Image = string.Empty;
+            Console.WriteLine("File size exceeds the maximum limit.");
+            return;
+        }
+
+        using (var ms = new MemoryStream())
+        {
+            await file.OpenReadStream(maxFileSize).CopyToAsync(ms);
+            var fileBytes = ms.ToArray();
+            String base64String = Convert.ToBase64String(fileBytes);
+            imageUri = $"data:{file.ContentType};base64,{base64String}";
+            Listings.Image = imageUri;
+
+        }
+    }
 
     private int currentStep = 1;
 
