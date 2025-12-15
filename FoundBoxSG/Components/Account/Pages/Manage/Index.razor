@@ -3,7 +3,9 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using FoundBoxSG.Data
-
+@using Microsoft.EntityFrameworkCore
+@using FoundBoxSG.Domain
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject UserManager<FoundBoxSGUser> UserManager
 @inject SignInManager<FoundBoxSGUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
@@ -28,6 +30,17 @@
                     <label for="phone-number" class="form-label">Phone number</label>
                     <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
                 </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Nationality" class="form-control" placeholder="Please enter your nationality." />
+                    <label for="nationality" class="form-label">Nationality</label>
+                    <ValidationMessage For="() => Input.Nationality" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Region" class="form-control" placeholder="Please enter your region." />
+                    <label for="region" class="form-label">Region</label>
+                    <ValidationMessage For="() => Input.Region" class="text-danger" />
+                </div>
+
                 <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
             </EditForm>
         </div>
@@ -37,6 +50,7 @@
     private FoundBoxSGUser user = default!;
     private string? username;
     private string? phoneNumber;
+    private AppUser? CurrentAppUser;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -50,6 +64,15 @@
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
+        var aspNetUserId = await UserManager.GetUserIdAsync(user);
+
+        using var context = DbFactory.CreateDbContext();
+
+        CurrentAppUser = await context.AppUser
+            .FirstOrDefaultAsync(au => au.AspNetUserId == aspNetUserId);
+
+        Input.Nationality ??= CurrentAppUser.Nationality;
+        Input.Region ??= CurrentAppUser.Region;
         Input.PhoneNumber ??= phoneNumber;
     }
 
@@ -64,6 +87,33 @@
             }
         }
 
+        if (CurrentAppUser is not null)
+        {
+            bool appUserChanged = false;
+            if (CurrentAppUser.Nationality != Input.Nationality)
+            {
+                CurrentAppUser.Nationality = Input.Nationality;
+                appUserChanged = true;    
+            }
+            if (CurrentAppUser.Region != Input.Region)
+            {
+                CurrentAppUser.Region= Input.Region;
+                appUserChanged = true;
+            }
+
+            if (appUserChanged)
+            {
+                using var context = DbFactory.CreateDbContext();
+
+                context.AppUser.Attach(CurrentAppUser);
+                context.Entry(CurrentAppUser).State = EntityState.Modified;
+
+                CurrentAppUser.DateModified = DateTime.Now;
+
+                await context.SaveChangesAsync();
+            }
+        }
+
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
@@ -73,5 +123,17 @@
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
+
+        //For AppUser
+
+        [Required]
+        [StringLength(100)]
+        [Display(Name = "Nationality")]
+        public string? Nationality { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        [Display(Name = "Region")]
+        public string? Region { get; set; }
     }
 }
