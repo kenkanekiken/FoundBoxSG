@@ -89,19 +89,30 @@
                     <h3>Final Step:</h3>
                     <div class="mb-3">
                         <label for="image" class="form-label">Upload Image:</label> 
-                        <InputFile id="image" OnChange="@LoadFile" class="form-control" /> 
-                        <ValidationMessage For="() => Listings.Image" class="text-danger" /> 
+                        <InputFile id="image" OnChange="@LoadFiles" class="form-control" multiple="multiple" /> 
                     </div>
-                    @if (!string.IsNullOrEmpty(imageUri))
+                    @if (FileErrors.Any())
                     {
-                        <div class="mt-2">
-                            <img src="@imageUri" style="max-width: 200px; height: auto" alt="Uploaded Image"/>
+                        <div class="alert alert-danger mb-3" role="alert">
+                            **Upload Errors:**
+                            <ul>
+                                @foreach (var error in FileErrors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
                         </div>
                     }
-                     @if (!string.IsNullOrEmpty(Listings.Image))
+                    @if (Listings.Images.Any())
                     {
-                        <div class="mt-2">
-                            <textarea class ="form-control" rows="3" readonly>@Listings.Image</textarea>
+                        <div class="d-flex flex_wrap gap-3">
+                            @foreach (var imageUri in Listings.Images)
+                            {
+                                <div class="card p-2" style="width: 200px">
+                                    <img src="@imageUri" style="width: 100%; height: auto; object-fit: cover" alt="Uploaded Image" />
+                                </div>
+                                
+                            }
                         </div>
                     }
                     <div class="mb-3">
@@ -155,26 +166,55 @@
     private Listings Listings { get; set; } = new();
     public string imageUri;
     private const int maxFileSize = 512000;
-    private async Task LoadFile(InputFileChangeEventArgs e)
+    private const int maxFiles = 5;
+    private List<string> FileErrors = new List<string>();
+    private async Task LoadFiles(InputFileChangeEventArgs e)
     {
-        var file = e.File;
-        if (file.Size > maxFileSize)
+        FileErrors.Clear();
+        var selectedFiles = e.GetMultipleFiles(maxFiles);
+
+        if (selectedFiles.Count > maxFiles)
         {
-            imageUri = string.Empty;
-            Listings.Image = string.Empty;
-            Console.WriteLine("File size exceeds the maximum limit.");
+            FileErrors.Add("File number exceeds the maximum limit.");
+            StateHasChanged();
             return;
         }
 
-        using (var ms = new MemoryStream())
+        foreach (var file in selectedFiles)
         {
-            await file.OpenReadStream(maxFileSize).CopyToAsync(ms);
-            var fileBytes = ms.ToArray();
-            String base64String = Convert.ToBase64String(fileBytes);
-            imageUri = $"data:{file.ContentType};base64,{base64String}";
-            Listings.Image = imageUri;
+            if (file.Size > maxFileSize)
+            {
+                FileErrors.Add($"File {file.Name} exceeds the maximum size of {maxFileSize} bytes.");
+                continue;
+            }
+
+            if (!file.ContentType.StartsWith("image/"))
+            {
+                FileErrors.Add($"File {file.Name} is not a supported image format.");
+                continue;
+            }
+
+            using (var ms = new MemoryStream())
+            {
+                try
+                {
+                    await file.OpenReadStream(maxFileSize).CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    String base64String = Convert.ToBase64String(fileBytes);
+                    string imageUri = $"data:{file.ContentType};base64,{base64String}";
+                    Listings.Images.Add(imageUri);
+                }
+                catch (Exception ex)
+                {
+                    FileErrors.Add("No valid image files were selected.");
+                    continue;
+                }
+
+            }
+
 
         }
+        StateHasChanged();
     }
 
     private int currentStep = 1;

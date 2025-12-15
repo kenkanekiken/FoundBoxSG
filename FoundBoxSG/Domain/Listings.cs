@@ -11,6 +11,6 @@
         public string? Location { get; set; }
         public string? UniqueFeatures { get; set; }
         public string? Color { get; set; }
-        public string? Image { get; set; }
+        public List<string> Images { get; set; } = new List<string>();
     }
 }
