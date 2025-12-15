@@ -22,12 +22,6 @@ else
             <EditForm method="post" Model="Listings" OnValidSubmit="UpdateListings" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
                 <ValidationSummary role="alert"/>
-                <input type="hidden" name="Listings.Id" value="@Listings.Id" />
-                <div class="mb-3">
-                    <label for="listingtype" class="form-label">ListingType:</label>
-                    <InputText id="listingtype" @bind-Value="Listings.ListingType" class="form-control" />
-                    <ValidationMessage For="() => Listings.ListingType" class="text-danger" />
-                </div>
                 <div class="mb-3">
                     <label for="title" class="form-label">Title:</label>
                     <InputText id="title" @bind-Value="Listings.Title" class="form-control" />
@@ -63,11 +57,12 @@ else
                     <InputText id="color" @bind-Value="Listings.Color" class="form-control" />
                     <ValidationMessage For="() => Listings.Color" class="text-danger" />
                 </div>
-                @* <div class="mb-3">
-                    <label for="image" class="form-label">Image:</label>
-                    <InputText id="image" @bind-Value="Listings.Images" class="form-control" />
-                    <ValidationMessage For="() => Listings.Images" class="text-danger" />
-                </div> *@
+                <div class="mb-3">
+                    <label for="image" class="form-label">Image(s):</label>
+                    <InputText id="image" @bind-Value="ImagesString" class="form-control" />
+                    <ValidationMessage For="() => ImagesString" class="text-danger" />
+                    <small class="form-text text-muted">Enter image URLs separated by commas.</small>
+                </div>
                 <div class="mb-3" hidden>
                     <label for="createdby" class="form-label">CreatedBy:</label>
                     <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" />
@@ -107,7 +102,21 @@ else
 
     private string userId = "System";
     //Inject the AuthenticationStateProvider to get the user id.
-    @inject AuthenticationStateProvider authenticationStateProvider
+    [Inject]
+    private AuthenticationStateProvider authenticationStateProvider { get; set; }
+
+
+    private string ImagesString
+    {
+        get => Listings?.Images != null ? string.Join(", ", Listings.Images) : string.Empty;
+        set
+        {
+            if (Listings != null)
+            {
+                Listings.Images = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -129,37 +138,34 @@ else
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task UpdateListings()
     {
         using var context = DbFactory.CreateDbContext();
 
-        //Set the userId to the ModifiedBy field
-        Listings.ModifiedBy = userId;
-        //Set the DateModified field to current date and time
-        Listings.DateModified = DateTime.Now;
-
-        context.Attach(Listings!).State = EntityState.Modified;
-
-        try
+        var existing = await context.Listings.FirstOrDefaultAsync(x => x.Id == Id);
+        if (existing is null)
         {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ListingsExists(Listings!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            NavigationManager.NavigateTo("notfound");
+            return;
         }
 
+        // update what user edits
+        existing.Title = Listings.Title;
+        existing.Description = Listings.Description;
+        existing.ItemCategory = Listings.ItemCategory;
+        existing.Brand = Listings.Brand;
+        existing.Location = Listings.Location;
+        existing.UniqueFeatures = Listings.UniqueFeatures;
+        existing.Color = Listings.Color;
+
+
+        existing.ModifiedBy = userId;
+        existing.DateModified = DateTime.Now;
+
+        await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/listings");
     }
+
 
     private bool ListingsExists(int id)
     {
