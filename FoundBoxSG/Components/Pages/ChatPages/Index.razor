@@ -1,0 +1,194 @@
+﻿@page "/messages/chat/{matchId:int}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using FoundBoxSG.Domain
+@using FoundBoxSG.Data
+@using FoundBoxSG.ViewModels
+@using System.Security.Claims
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+
+
+<PageTitle>ChatBox</PageTitle>
+
+<div class="d-flex flex-column">
+
+    <!-- Top bar -->
+    <div class="d-flex align-items-center justify-content-between border-bottom px-3 py-2 bg-white flex-shrink-0">
+        <button class="btn btn-link text-decoration-none p-0" @onclick="GoBack">
+            <i class="bi bi-arrow-left fs-4"></i>
+        </button>
+
+        <div class="fw-semibold">@headerTitle</div>
+        <div style="width:32px;"></div>
+    </div>
+
+    <!-- Messages area -->
+    <div class="flex-grow-1 overflow-auto px-3 py-5 bg-white">
+        @if (!loaded)
+        {
+            <div class="text-muted">Loading…</div>
+        }
+        else if (!authorized)
+        {
+            <div class="text-danger">You don’t have access to this chat.</div>
+        }
+        else if (msgs.Count == 0)
+        {
+            <div class="text-muted">No messages yet. Say hi 👋</div>
+        }
+        else
+        {
+            @foreach (var m in msgs)
+            {
+                bool isRight;
+
+                if (!isAdmin)
+                {
+                    // Normal user: my messages on the right
+                    isRight = (m.SenderUserId == myAppUserId);
+                }
+                else
+                {
+                    // Admin: matcher on right, listing owner on left
+                    isRight = (m.SenderUserId == matcherUserId);
+                }
+
+                <div class="d-flex mb-2" style="justify-content:@(isRight ? "flex-end" : "flex-start")">
+                    <div class="px-3 py-2 rounded-4 @(isRight ? "bg-dark text-white" : "bg-secondary bg-opacity-10")"
+                         style="max-width:70%;">
+                        <div style="white-space: pre-wrap; word-break: break-word;">
+                            @m.Content
+                        </div>
+
+                        <div class="small mt-1 @(isRight ? "text-white-50 text-end" : "text-muted")">
+                            @(m.DateCreated?.ToString("dd MMM yyyy, HH:mm") ?? "")
+                        </div>
+                    </div>
+                </div>
+            }
+
+        }
+    </div>
+
+    <!-- Input bar (always visible) -->
+    <div class="border-top bg-white px-3 py-2 flex-shrink-0 fixed-bottom">
+        <div class="input-group">
+            <input class="form-control rounded-start-pill"
+                   placeholder="Type here..."
+                   @bind="draft"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown"
+                   disabled="@(!authorized)" />
+            <button class="btn btn-dark rounded-end-pill"
+                    @onclick="Send"
+                    disabled="@(!authorized || string.IsNullOrWhiteSpace(draft))">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public int matchId { get; set; }
+
+    private bool loaded;
+    private bool authorized;
+    private string headerTitle = "Chat";
+    private bool isAdmin;          // set from roles
+    private int matcherUserId;     // the Match.MatcherUserId
+
+    private int myAppUserId;
+    private List<Messages> msgs = new();
+    private string draft = "";
+    protected override async Task OnParametersSetAsync()
+    {
+        loaded = false;
+        authorized = false;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        // current user AspNet Id
+        var user = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var aspNetUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // map to AppUser int
+        var appUserId = await context.AppUser
+            .Where(u => u.AspNetUserId == aspNetUserId)
+            .Select(u => (int?)u.Id)
+            .SingleOrDefaultAsync();
+
+        myAppUserId = appUserId.Value;
+
+        // load match
+        var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        if (match is null)
+        {
+            loaded = true;
+            return;
+        }
+
+        // load listing
+        var listing = await context.Listings.FirstOrDefaultAsync(l => l.Id == match.ListingId);
+        if (listing is null)
+        {
+            loaded = true;
+            return;
+        }
+
+        headerTitle = listing.Title ?? "Chat";
+
+        // allow only matcher or listing owner
+        authorized = (match.MatcherUserId == myAppUserId) || (listing.UserId == myAppUserId);
+
+        if (authorized)
+        {
+            msgs = await context.Messages
+                .Where(m => m.MatchId == matchId)
+                .OrderBy(m => m.DateCreated)
+                .ToListAsync();
+        }
+
+        loaded = true;
+    }
+    private void GoBack() => NavigationManager.NavigateTo("/messages");
+    private async Task Send()
+    {
+        if (!authorized || string.IsNullOrWhiteSpace(draft)) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        context.Messages.Add(new Messages
+        {
+            MatchId = matchId,
+            SenderUserId = myAppUserId,
+            Content = draft.Trim(),
+            DateCreated = DateTime.Now,
+            DateModified = DateTime.Now
+        });
+
+        await context.SaveChangesAsync();
+        draft = "";
+
+        // refresh messages after sending
+        msgs = await context.Messages
+            .Where(m => m.MatchId == matchId)
+            .OrderBy(m => m.DateCreated)
+            .ToListAsync();
+    }
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await Send();
+        }
+    }
+
+}
