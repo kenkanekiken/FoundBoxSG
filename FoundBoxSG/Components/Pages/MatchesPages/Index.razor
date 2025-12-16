@@ -116,7 +116,18 @@ else
                     <div class="text-muted mb-2">@selected.ItemCategory</div>
                     <div class="mb-3"><small class="text-muted">Posted @selected.DateCreated</small></div>
 
-                    <div class="text-muted mb-2">Image: @selected.Images</div>
+                    @if (@selected.Images.Any())
+                    {
+                        <div class="d-flex flex_wrap gap-1 mb-2">
+                            @foreach (var imageUri in @selected.Images)
+                            {
+                                <div class="card p-2" style="width: 100px">
+                                    <img src="@imageUri" style="width: 100%; height: auto; object-fit: cover" alt="Uploaded Image" />
+                                </div>
+
+                            }
+                        </div>
+                    }
                     <div class="text-muted mb-2">ID: @selected.Id</div>
                     <div class="text-muted mb-2">Brand: @selected.Brand</div>
                     <div class="text-muted mb-2">Color: @selected.Color</div>

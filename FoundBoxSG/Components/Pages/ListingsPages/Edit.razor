@@ -4,119 +4,250 @@
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
+@rendermode InteractiveServer
 
 <PageTitle>Edit</PageTitle>
 
-<h1>Edit</h1>
+<div class="content px-5 py-5">
+    <h1>Edit Listing</h1>
+    <hr />
 
-<h2>Listings</h2>
-<hr />
-@if (Listings is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
+    @if (Listings is null)
+    {
+        <p><em>Loading listing details</em></p>    
+    }
+    else 
+    {
     <div class="row">
         <div class="col-md-4">
-            <EditForm method="post" Model="Listings" OnValidSubmit="UpdateListings" FormName="edit" Enhance>
+            <EditForm method="post" Model="Listings" OnValidSubmit="UpdateListings" FormName="create" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
-                <div class="mb-3">
-                    <label for="title" class="form-label">Title:</label>
-                    <InputText id="title" @bind-Value="Listings.Title" class="form-control" />
-                    <ValidationMessage For="() => Listings.Title" class="text-danger" />
+                <ValidationSummary class="text-danger" role="alert" />
+                @if (currentStep == 1)
+                {
+                    <h3> Basic Details: </h3>
+                    <div class="mb-3">
+                        <label class="form-label"> Listing Type:</label>
+                        <InputRadioGroup Name="listingType" @bind-value="Listings.ListingType" class="btn-group">
+                            <InputRadio Name="listingType"
+                                        Value="@("Found")"
+                                        class="btn-check"
+                                        id="listing-found" />
+                            <label class="btn btn-outline-primary" for="listing-found">
+                                Found
+                            </label>
+                            <InputRadio Name="listingType"
+                                        Value="@("Lost")"
+                                        class="btn-check"
+                                        id="listing-lost" />
+                            <label class="btn btn-outline-primary" for="listing-lost">
+                                Lost
+                            </label>
+                        </InputRadioGroup>
+
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title:</label>
+                        <InputText id="title" @bind-Value="Listings.Title" class="form-control" />
+                        <ValidationMessage For="() => Listings.Title" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description:</label>
+                        <InputTextArea id="description" @bind-Value="Listings.Description" class="form-control" rows="5" />
+                        <ValidationMessage For="() => Listings.Description" class="text-danger" />
+                    </div>
+                }
+                @if (currentStep == 2)
+                {
+                    <h3>More Specific Information:</h3>
+                    <div class="mb-3">
+                        <label for="itemcategory" class="form-label">Item Category:</label>
+                        <InputSelect id="itemcategory" @bind-Value="Listings.ItemCategory" class="form-select">
+                            @foreach (string category in Categories)
+                            {
+                                <option value="@category">@category</option>
+                            }
+
+                        </InputSelect>
+                        <ValidationMessage For="() => Listings.ItemCategory" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="brand" class="form-label">Brand:</label>
+                        <InputText id="brand" @bind-Value="Listings.Brand" class="form-control" />
+                        <ValidationMessage For="() => Listings.Brand" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="uniquefeatures" class="form-label">Unique Features:</label>
+                        <InputText id="uniquefeatures" @bind-Value="Listings.UniqueFeatures" class="form-control" />
+                        <ValidationMessage For="() => Listings.UniqueFeatures" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color:</label>
+                        <InputText id="color" @bind-Value="Listings.Color" class="form-control" />
+                        <ValidationMessage For="() => Listings.Color" class="text-danger" />
+                    </div>
+                }
+                @if (currentStep == 3)
+
+                {
+                    <h3>Final Step:</h3>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Upload Image:</label>
+                        <InputFile id="image" OnChange="@LoadFiles" class="form-control" multiple="multiple" />
+                    </div>
+                    @if (FileErrors.Any())
+                    {
+                        <div class="alert alert-danger mb-3" role="alert">
+                            **Upload Errors:**
+                            <ul>
+                                @foreach (var error in FileErrors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (Listings.Images.Any())
+                    {
+                        <div class="d-flex flex_wrap gap-3">
+                            @foreach (var imageUri in Listings.Images.ToList())
+                            {
+                                <div class="card p-2" style="width: 200px">
+                                    <img src="@imageUri" style="width: 100%; height: auto; object-fit: cover" alt="Uploaded Image" />
+                                    <button type="button" class = "btn btn-danger btn-sm mt-2" @onclick="() => RemoveImage(imageUri)">
+                                        X
+                                    </button>
+                                </div>
+
+                            }
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Item location:</label>
+                        <InputText id="location" @bind-Value="Listings.Location" class="form-control" />
+                        <ValidationMessage For="() => Listings.Location" class="text-danger" />
+                    </div>
+                }
+                <hr />
+                <div class="d-flex justify-content-between">
+                    @if (currentStep > 1)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="PreviousStep">Back</button>
+                    }
+                    else
+                    {
+                        <div></div>
+                    }
+                    @if (currentStep < 3)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="NextStep">Next</button>
+                    }
+
+                    @if (currentStep == 3)
+                    {
+                        <button type="submit" class="btn btn-success">Save edited Listing</button>
+                    }
+
                 </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description:</label>
-                    <InputText id="description" @bind-Value="Listings.Description" class="form-control" />
-                    <ValidationMessage For="() => Listings.Description" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="itemcategory" class="form-label">ItemCategory:</label>
-                    <InputText id="itemcategory" @bind-Value="Listings.ItemCategory" class="form-control" />
-                    <ValidationMessage For="() => Listings.ItemCategory" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="brand" class="form-label">Brand:</label>
-                    <InputText id="brand" @bind-Value="Listings.Brand" class="form-control" />
-                    <ValidationMessage For="() => Listings.Brand" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="location" class="form-label">Location:</label>
-                    <InputText id="location" @bind-Value="Listings.Location" class="form-control" />
-                    <ValidationMessage For="() => Listings.Location" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="uniquefeatures" class="form-label">UniqueFeatures:</label>
-                    <InputText id="uniquefeatures" @bind-Value="Listings.UniqueFeatures" class="form-control" />
-                    <ValidationMessage For="() => Listings.UniqueFeatures" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="color" class="form-label">Color:</label>
-                    <InputText id="color" @bind-Value="Listings.Color" class="form-control" />
-                    <ValidationMessage For="() => Listings.Color" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="image" class="form-label">Image(s):</label>
-                    <InputText id="image" @bind-Value="ImagesString" class="form-control" />
-                    <ValidationMessage For="() => ImagesString" class="text-danger" />
-                    <small class="form-text text-muted">Enter image URLs separated by commas.</small>
-                </div>
-                <div class="mb-3" hidden>
-                    <label for="createdby" class="form-label">CreatedBy:</label>
-                    <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" />
-                    <ValidationMessage For="() => Listings.CreatedBy" class="text-danger" />
-                </div>
-                <div class="mb-3" hidden>
-                    <label for="modifiedby" class="form-label">ModifiedBy:</label>
-                    <InputText id="modifiedby" @bind-Value="Listings.ModifiedBy" class="form-control" />
-                    <ValidationMessage For="() => Listings.ModifiedBy" class="text-danger" />
-                </div>
-                <div class="mb-3" hidden>
-                    <label for="datecreated" class="form-label">DateCreated:</label>
-                    <InputDate id="datecreated" @bind-Value="Listings.DateCreated" class="form-control" />
-                    <ValidationMessage For="() => Listings.DateCreated" class="text-danger" />
-                </div>
-                <div class="mb-3" hidden>
-                    <label for="datemodified" class="form-label">DateModified:</label>
-                    <InputDate id="datemodified" @bind-Value="Listings.DateModified" class="form-control" />
-                    <ValidationMessage For="() => Listings.DateModified" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
         </div>
     </div>
-}
-
-<div>
-    <a href="/listings">Back to List</a>
+    
+    <div>
+        <a href="/listings">Back to List</a>
+    </div>
+    }
 </div>
 
 @code {
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
+
     [SupplyParameterFromForm]
     private Listings? Listings { get; set; }
+    private int currentStep = 1;
+    public string imageUri;
+    private const int maxFileSize = 5242880;
+    private const int maxFiles = 5;
+    private List<string> FileErrors = new List<string>();
+
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        FileErrors.Clear();
+        var selectedFiles = e.GetMultipleFiles(maxFiles);
+
+        if (selectedFiles.Count > maxFiles)
+        {
+            FileErrors.Add("File number exceeds the maximum limit.");
+            StateHasChanged();
+            return;
+        }
+
+        foreach (var file in selectedFiles)
+        {
+            if (file.Size > maxFileSize)
+            {
+                FileErrors.Add($"File {file.Name} exceeds the maximum size of {maxFileSize} bytes.");
+                continue;
+            }
+
+            if (!file.ContentType.StartsWith("image/"))
+            {
+                FileErrors.Add($"File {file.Name} is not a supported image format.");
+                continue;
+            }
+
+            using (var ms = new MemoryStream())
+            {
+                try
+                {
+                    await file.OpenReadStream(maxFileSize).CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    String base64String = Convert.ToBase64String(fileBytes);
+                    string imageUri = $"data:{file.ContentType};base64,{base64String}";
+                    Listings.Images.Add(imageUri);
+                }
+                catch (Exception ex)
+                {
+                    FileErrors.Add("No valid image files were selected.");
+                    continue;
+                }
+
+            }
+
+
+        }
+        StateHasChanged();
+    }
+
+    private List<String> Categories = new List<String>
+    {
+         "Phones/Tablets",
+         "Laptops/Electronics",
+         "Keys",
+         "Wallets/Money",
+         "Documents/ID/cards",
+         "Books",
+         "Bags/Luggage",
+         "Clothing/Jewelry/Accessories",
+         "Glasses",
+         "others",
+    };
+
+    private void RemoveImage(String imageUri)
+    {
+        Listings.Images.Remove(imageUri);
+        StateHasChanged();
+    }
 
     private string userId = "System";
     //Inject the AuthenticationStateProvider to get the user id.
     [Inject]
     private AuthenticationStateProvider authenticationStateProvider { get; set; }
 
-
-    private string ImagesString
-    {
-        get => Listings?.Images != null ? string.Join(", ", Listings.Images) : string.Empty;
-        set
-        {
-            if (Listings != null)
-            {
-                Listings.Images = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-            }
-        }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,6 +281,7 @@ else
         }
 
         // update what user edits
+        existing.ListingType = Listings.ListingType;
         existing.Title = Listings.Title;
         existing.Description = Listings.Description;
         existing.ItemCategory = Listings.ItemCategory;
@@ -157,6 +289,7 @@ else
         existing.Location = Listings.Location;
         existing.UniqueFeatures = Listings.UniqueFeatures;
         existing.Color = Listings.Color;
+        existing.Images = Listings.Images;
 
 
         existing.ModifiedBy = userId;
@@ -171,5 +304,23 @@ else
     {
         using var context = DbFactory.CreateDbContext();
         return context.Listings.Any(e => e.Id == id);
+    }
+
+    private void NextStep()
+    {
+        if (currentStep < 3)
+        {
+            currentStep++;
+            StateHasChanged();
+        }
+    }
+
+    private void PreviousStep()
+    {
+        if (currentStep > 1)
+        {
+            currentStep--;
+            StateHasChanged();
+        }
     }
 }
