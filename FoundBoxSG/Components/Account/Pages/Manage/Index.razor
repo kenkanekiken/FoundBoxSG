@@ -70,7 +70,18 @@
 
         CurrentAppUser = await context.AppUser
             .FirstOrDefaultAsync(au => au.AspNetUserId == aspNetUserId);
+        if (CurrentAppUser is null)
+        {
+            CurrentAppUser = new AppUser
+            {
+                AspNetUserId = aspNetUserId,
+                DateCreated = DateTime.Now,
+                DateModified = DateTime.Now
+            };
 
+            context.AppUser.Add(CurrentAppUser);
+            await context.SaveChangesAsync();
+        }
         Input.Nationality ??= CurrentAppUser.Nationality;
         Input.Region ??= CurrentAppUser.Region;
         Input.PhoneNumber ??= phoneNumber;

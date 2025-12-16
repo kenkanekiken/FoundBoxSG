@@ -1,11 +1,14 @@
 ﻿@inherits LayoutComponentBase
-
+@inject NavigationManager NavigationManager
 <div class="page">
     <NavMenu />
     <main class="content-wrapper">
         @Body
     </main>
-    <Footer />
+    @if (!NavigationManager.Uri.Contains("/messages/chat", StringComparison.OrdinalIgnoreCase))
+    {
+        <Footer />
+    }
 </div>
 
 <div id="blazor-error-ui">
