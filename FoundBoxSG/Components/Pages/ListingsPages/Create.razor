@@ -11,7 +11,7 @@
 <PageTitle>Create</PageTitle>
 
 <div class="content px-5 py-5">
-<h1>Create Listings</h1>
+<h1>Create Listing</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -165,7 +165,7 @@
     [SupplyParameterFromForm]
     private Listings Listings { get; set; } = new();
     public string imageUri;
-    private const int maxFileSize = 512000;
+    private const int maxFileSize = 5242880;
     private const int maxFiles = 5;
     private List<string> FileErrors = new List<string>();
     private async Task LoadFiles(InputFileChangeEventArgs e)
