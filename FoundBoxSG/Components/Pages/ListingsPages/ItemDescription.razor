@@ -1,4 +1,8 @@
 ﻿@using FoundBoxSG.Domain
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager NavigationManager
 
 @if (Item is null)
 {
@@ -21,7 +25,14 @@ else
         </small>
 
         <div class="py-4">
-            <button type="button" class="btn btn-dark">Claim item</button>
+            <!-- Change the button's onclick to pass the required listingId parameter -->
+            @if (Item.UserId != appUserId)
+            {
+                <button class="btn btn-dark" @onclick="() => ClaimItem(Item.Id)">
+                    Claim item
+                </button>
+            }
+
         </div>
 
         <!-- You can later bind this to Item.ImageUrl or a list of images -->
@@ -88,4 +99,57 @@ else
 
 @code {
     [Parameter] public Listings? Item { get; set; }
+    private int appUserId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Item != null)
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            var auth = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+            var aspNetUserId = auth.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            appUserId = await context.AppUser
+                .Where(u => u.AspNetUserId == aspNetUserId)
+                .Select(u => u.Id)
+                .SingleAsync();
+        }
+    }
+
+    private async Task ClaimItem(int listingId)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        var auth = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var aspNetUserId = auth.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        var myAppUserId = await context.AppUser
+            .Where(u => u.AspNetUserId == aspNetUserId)
+            .Select(u => u.Id)
+            .SingleAsync();
+
+        var listing = await context.Listings.FirstAsync(l => l.Id == listingId);
+
+        if (listing.UserId == myAppUserId)
+            return; // or show message: can't claim your own listing
+
+        var match = await context.Matches.FirstOrDefaultAsync(m =>
+            m.ListingId == listingId && m.MatcherUserId == myAppUserId);
+
+        if (match == null)
+        {
+            match = new Matches
+            {
+                ListingId = listingId,
+                MatcherUserId = myAppUserId,
+                DateCreated = DateTime.Now,
+                DateModified = DateTime.Now
+            };
+            context.Matches.Add(match);
+            await context.SaveChangesAsync();
+        }
+
+        NavigationManager.NavigateTo($"/messages?matchId={match.Id}");
+    }
+
 }

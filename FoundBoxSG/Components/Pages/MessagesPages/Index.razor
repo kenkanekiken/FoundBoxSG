@@ -1,50 +1,310 @@
 ﻿@page "/messages"
-@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
 @using FoundBoxSG.Domain
 @using FoundBoxSG.Data
-@implements IAsyncDisposable
+@using FoundBoxSG.ViewModels
+@using System.Security.Claims
+@inject AuthenticationStateProvider authenticationStateProvider
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Messages</PageTitle>
 
-<div class="content px-4">
-    <h1>Index</h1>
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger m-3">
+        <pre class="m-0">@_error</pre>
+    </div>
+}
 
-    <p>
-        <a href="messages/create">Create New</a>
-    </p>
-
-    <QuickGrid Class="table" Items="context.Messages">
-        <PropertyColumn Property="messages => messages.SenderUserId" />
-        <PropertyColumn Property="messages => messages.MatchId" />
-        <PropertyColumn Property="messages => messages.Content" />
-        <PropertyColumn Property="messages => messages.CreatedBy" />
-        <AuthorizeView Roles="Administrator">
-            <PropertyColumn Property="messages => messages.ModifiedBy" />
-        </AuthorizeView>
-        <PropertyColumn Property="messages => messages.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
-        <AuthorizeView Roles="Administrator">
-            <PropertyColumn Property="messages => messages.DateModified" Format="dd/MM/yyyy" />
-        </AuthorizeView>
-
-        <TemplateColumn Context="messages">
-            <a href="@($"messages/edit?id={messages.Id}")">Edit</a> |
-            <a href="@($"messages/details?id={messages.Id}")">Details</a> |
-            <a href="@($"messages/delete?id={messages.Id}")">Delete</a>
-        </TemplateColumn>
-    </QuickGrid>
-</div>
-@code {
-    private FoundBoxSGContext context = default!;
-
-    protected override void OnInitialized()
+<div class="container-fluid py-4">
+    <h2 class="m-0 pt-1 pb-3 px-4 fw-normal">All Chats</h2>
+    @if (isAdmin)
     {
-        context = DbFactory.CreateDbContext();
+        <span class="px-4 text-muted">Admin: Able to viewing all messsags</span>
+    }
+</div>
+
+@if (!isLoaded)
+{
+    <div class="px-4 text-muted">Loading…</div>
+}
+else if (Chats.Count == 0)
+{
+    <div class="px-4 text-muted">No chats yet.</div>
+}
+else
+{
+    @foreach (var chat in Chats)
+    {
+        <div class="container-fluid m-0 px-4 pb-2">
+            <div class="col-12 p-3 rounded-4 bg-secondary bg-opacity-10 text-start"
+                 role="button"
+                 style="cursor:pointer;"
+                 @onclick="() => OpenChat(chat.MatchId)">
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Left circle icon -->
+                    <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:56px;height:56px;">
+                        <i class="bi bi-person-fill fs-3"></i>
+                    </div>
+
+                    <!-- Right content -->
+                    <div class="flex-grow-1 d-flex flex-column flex-md-row justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold">@chat.ListingTitle</div>
+                            <div class="text-muted small">Listing ID: @chat.ListingId</div>
+                            <div class="text-muted small">Matched at @chat.LastUpdated</div>
+                        </div>
+
+                        <!-- Close case -->
+                        <div class="text-md-end mt-2 mt-md-0">
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => CloseCase(chat.MatchId)">
+                                Close Case
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+}
+
+@if (showModal)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4">
+                <div class="modal-header">
+                    <h5 class="modal-title">@modalHeaderTitle</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+
+                <div class="modal-body" style="max-height:70vh; overflow:auto;">
+                    @if (modalLoading)
+                    {
+                        <div class="text-muted">Loading chat…</div>
+                    }
+                    else if (!string.IsNullOrEmpty(modalError))
+                    {
+                        <div class="text-danger">@modalError</div>
+                    }
+                    else if (modalMsgs.Count == 0)
+                    {
+                        <div class="text-muted">No messages yet.</div>
+                    }
+                    else
+                    {
+                        @foreach (var m in modalMsgs)
+                        {
+                            bool isRight;
+
+                            if (!isAdmin)
+                            {
+                                // not used normally (users navigate), but safe anyway
+                                isRight = (m.SenderUserId == myAppUserId);
+                            }
+                            else
+                            {
+                                // Admin: matcher on right, listing owner on left
+                                isRight = (m.SenderUserId == modalMatcherId);
+                            }
+
+                            <div class="d-flex mb-2" style="justify-content:@(isRight ? "flex-end" : "flex-start")">
+                                <div class="px-3 py-2 rounded-4 @(isRight ? "bg-dark text-white" : "bg-secondary bg-opacity-10")"
+                                     style="max-width:70%;">
+                                    <div style="white-space: pre-wrap; word-break: break-word;">
+                                        @m.Content
+                                    </div>
+                                    <div class="small opacity-75 mt-1">
+                                        @(m.DateCreated?.ToString("dd MMM yyyy, HH:mm") ?? "")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoaded;
+    private bool isAdmin;
+    private int myAppUserId;
+    private string? _error;
+
+    private List<ChatRow> Chats = new();
+
+    // modal state (admin only)
+    private bool showModal;
+    private bool modalLoading;
+    private string modalHeaderTitle = "Chat";
+    private string? modalError;
+    private int modalMatcherId;
+    private int modalListingOwnerId;
+    private List<Messages> modalMsgs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+
+            var auth = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+
+            // ✅ Your real role name from AspNetRoles is "Administrator"
+            isAdmin = auth.IsInRole("Administrator");
+
+            // current aspNet user id
+            var aspNetUserId = auth.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // map to AppUser int id (admin may also have an AppUser row, but not required for viewing all chats)
+            myAppUserId = await context.AppUser
+                .Where(u => u.AspNetUserId == aspNetUserId)
+                .Select(u => u.Id)
+                .SingleOrDefaultAsync();
+
+            // ✅ Admin sees ALL chats
+            if (isAdmin)
+            {
+                Chats = await context.Matches
+                    .Join(context.Listings,
+                        m => m.ListingId,
+                        l => l.Id,
+                        (m, l) => new { m, l })
+                    .Select(x => new ChatRow
+                    {
+                        MatchId = x.m.Id,
+                        ListingId = x.l.Id,
+                        ListingTitle = x.l.Title ?? "(No title)",
+                        OtherUserId = x.m.MatcherUserId,
+                        LastUpdated = x.m.DateModified ?? x.m.DateCreated
+                    })
+                    .OrderByDescending(x => x.LastUpdated)
+                    .ToListAsync();
+
+                isLoaded = true;
+                return;
+            }
+
+            // ✅ Normal user sees only their chats
+            if (myAppUserId == 0)
+            {
+                Chats = new();
+                isLoaded = true;
+                return;
+            }
+
+            Chats = await context.Matches
+                .Join(context.Listings,
+                    m => m.ListingId,
+                    l => l.Id,
+                    (m, l) => new { m, l })
+                .Where(x => x.m.MatcherUserId == myAppUserId || x.l.UserId == myAppUserId)
+                .Select(x => new ChatRow
+                {
+                    MatchId = x.m.Id,
+                    ListingId = x.l.Id,
+                    ListingTitle = x.l.Title ?? "(No title)",
+                    OtherUserId = x.l.UserId == myAppUserId ? x.m.MatcherUserId : x.l.UserId,
+                    LastUpdated = x.m.DateModified ?? x.m.DateCreated
+                })
+                .OrderByDescending(x => x.LastUpdated)
+                .ToListAsync();
+
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.ToString();
+            isLoaded = true;
+        }
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    // ✅ This is the "admin popup vs user navigate" behaviour you want
+    private async Task OpenChat(int matchId)
+    {
+        if (isAdmin)
+        {
+            await ViewChatModal(matchId); // popup modal
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/messages/chat/{matchId}"); // go to chat page
+        }
+    }
+
+    // Admin modal loader
+    private async Task ViewChatModal(int matchId)
+    {
+        showModal = true;
+        modalLoading = true;
+        modalError = null;
+        modalMsgs.Clear();
+        modalHeaderTitle = "Chat";
+
+        try
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+
+            var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+            if (match is null)
+            {
+                modalError = "Match not found.";
+                return;
+            }
+
+            modalMatcherId = match.MatcherUserId;
+
+            var listing = await context.Listings.FirstOrDefaultAsync(l => l.Id == match.ListingId);
+            if (listing is null)
+            {
+                modalError = "Listing not found.";
+                return;
+            }
+
+            modalListingOwnerId = listing.UserId;
+            modalHeaderTitle = listing.Title ?? "Chat";
+
+            modalMsgs = await context.Messages
+                .Where(m => m.MatchId == matchId)
+                .OrderBy(m => m.DateCreated)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            modalError = ex.ToString();
+        }
+        finally
+        {
+            modalLoading = false;
+        }
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        modalMsgs.Clear();
+        modalError = null;
+        modalHeaderTitle = "Chat";
+    }
+
+    private void CloseCase(int matchId)
+    {
+        // TODO: implement later (status column etc.)
+    }
 }

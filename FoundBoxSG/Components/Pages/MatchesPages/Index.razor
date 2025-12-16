@@ -1,9 +1,7 @@
 ﻿@page "/matches"
-@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject AuthenticationStateProvider authenticationStateProvider
@@ -15,6 +13,10 @@
 <div class="container-fluid">
     <div class="pt-4 px-4 fs-2">Your Case</div>
     <div class="px-4 fs-5">Keep track of all your cases.</div>
+    @if (isAdmin)
+    {
+        <span class="px-4 text-muted">Admin: Able to viewing all listings available</span>
+    }
 </div>
 
 <div class="container-fluid">
@@ -39,7 +41,6 @@
                 <div class="bg-black bg-opacity-10 rounded-2 px-1">@FoundCount</div>
             </div>
         </button>
-
     </div>
 </div>
 
@@ -99,6 +100,7 @@ else
         </div>
     }
 }
+
 @if (showModal && selected is not null)
 {
     <div class="modal-backdrop fade show"></div>
@@ -116,7 +118,19 @@ else
                     <div class="text-muted mb-2">@selected.ItemCategory</div>
                     <div class="mb-3"><small class="text-muted">Posted @selected.DateCreated</small></div>
 
-                    <div class="text-muted mb-2">Image: @selected.Images</div>
+                    @if (selected.Images is not null && selected.Images.Any())
+                    {
+                        <div class="mb-3">
+                            <div class="fw-semibold mb-2">Images</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var img in selected.Images)
+                                {
+                                    <img src="@img" style="width:140px;height:140px;object-fit:cover;" class="rounded-3 border" />
+                                }
+                            </div>
+                        </div>
+                    }
+
                     <div class="text-muted mb-2">ID: @selected.Id</div>
                     <div class="text-muted mb-2">Brand: @selected.Brand</div>
                     <div class="text-muted mb-2">Color: @selected.Color</div>
@@ -133,48 +147,75 @@ else
         </div>
     </div>
 }
+
 @code {
     private enum ListingTab { Lost, Found }
-
     private ListingTab activeTab = ListingTab.Lost;
 
-    private bool isLoaded = false;
+    private bool isLoaded;
+    private bool isAdmin;
 
     private List<Listings> UserListings = new();
 
-    private bool showModal = false;
+    private bool showModal;
     private Listings? selected;
 
-    private int LostCount => UserListings.Count(x => x.ListingType == "Lost");
-    private int FoundCount => UserListings.Count(x => x.ListingType == "Found");
+    private int LostCount => UserListings.Count(x => string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase));
+    private int FoundCount => UserListings.Count(x => string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase));
 
     private IEnumerable<Listings> Filtered =>
         activeTab == ListingTab.Lost
-            ? UserListings.Where(x => x.ListingType == "Lost").OrderByDescending(x => x.DateCreated)
-            : UserListings.Where(x => x.ListingType == "Found").OrderByDescending(x => x.DateCreated);
+            ? UserListings.Where(x => string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase))
+                         .OrderByDescending(x => x.DateCreated)
+            : UserListings.Where(x => string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase))
+                         .OrderByDescending(x => x.DateCreated);
 
     protected override async Task OnInitializedAsync()
     {
+        isLoaded = false;
+
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        // Use the standard Identity claim for user id:
-        var aspNetUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        // Admin role check
+        isAdmin = user.IsInRole("Administrator");
 
         using var context = await DbFactory.CreateDbContextAsync();
 
-        // ✅ Choose ONE filter that matches your schema:
-        // If your Listings table stores AspNetUserId in CreatedBy:
-        // UserListings = await context.Listings.Where(l => l.CreatedBy == aspNetUserId).ToListAsync();
+        if (isAdmin)
+        {
+            // Admin sees ALL listings
+            UserListings = await context.Listings.ToListAsync();
+            isLoaded = true;
+            return;
+        }
 
-        // If your Listings table stores AppUser int in UserId (what your Create page does):
+
+        // Normal user: map Identity -> AppUser int (nullable safe)
+        var aspNetUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(aspNetUserId))
+        {
+            UserListings = new();
+            isLoaded = true;
+            return;
+        }
+
         var appUserId = await context.AppUser
             .Where(au => au.AspNetUserId == aspNetUserId)
-            .Select(au => au.Id)
+            .Select(au => (int?)au.Id)
             .SingleOrDefaultAsync();
 
+        if (appUserId is null)
+        {
+            // user exists in Identity but not in AppUser table
+            UserListings = new();
+            isLoaded = true;
+            return;
+        }
+
         UserListings = await context.Listings
-            .Where(l => l.UserId == appUserId)
+            .Where(l => l.UserId == appUserId.Value)
             .ToListAsync();
 
         isLoaded = true;
@@ -204,13 +245,16 @@ else
     {
         using var context = await DbFactory.CreateDbContextAsync();
 
-        context.Listings.Remove(item);
+        // reload entity so EF can track it safely
+        var entity = await context.Listings.FirstOrDefaultAsync(l => l.Id == item.Id);
+        if (entity is null) return;
+
+        context.Listings.Remove(entity);
         await context.SaveChangesAsync();
 
-        UserListings.Remove(item);
+        UserListings.RemoveAll(x => x.Id == item.Id);
+
         if (selected?.Id == item.Id)
-        {
             CloseModal();
-        }
     }
 }
