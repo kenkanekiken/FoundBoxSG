@@ -5,22 +5,54 @@
 @using FoundBoxSG.Data
 @using Microsoft.EntityFrameworkCore
 @using FoundBoxSG.Domain
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject UserManager<FoundBoxSGUser> UserManager
 @inject SignInManager<FoundBoxSGUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
-@inject IdentityRedirectManager RedirectManager
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
 
 <PageTitle>Profile</PageTitle>
-
-    <h3>Profile</h3>
-    <StatusMessage />
-
+    
+    
+@if (isLoading)
+{
+    <p><em>Loading user details</em></p>
+}
+else if (user is null)
+{
+    <p>User not found or logged in</p>    
+}
+else
+{
+<h3>Profile</h3>
+    @if (!string.IsNullOrEmpty(statusMessage))               
+    {
+        <div class="alert alert-success">@statusMessage</div>
+    }
     <div class="row">
         <div class="col-md-6">
             <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
-                <DataAnnotationsValidator />
+                <DataAnnotationsValidator/>
                 <ValidationSummary class="text-danger" role="alert" />
+                <div class="d-flex justify-content-start mb-3"
+                style= "width: 100px; height: 100px;">
+                @if (!string.IsNullOrEmpty(userProfileImageUri))
+                {
+                    <img Src="@userProfileImageUri"
+                           alt="User Profile Photo"
+                             class="rounded-circle border border-dark border-2"
+                           style="width: 100px; height: 100px; object-fit: cover; " />
+                }
+                else
+                {
+                    <p>
+                        No photo available
+                    </p>
+                }
+                </div>
                 <div class="form-floating mb-3">
                     <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
                     <label for="username" class="form-label">Username</label>
@@ -40,29 +72,62 @@
                     <label for="region" class="form-label">Region</label>
                     <ValidationMessage For="() => Input.Region" class="text-danger" />
                 </div>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Change Profile Photo:</label>
+                    <InputFile id="image" OnChange="@LoadFile" class="form-control" />
+                </div>
+                @if (FileErrors.Any())
+                {
+                <div class="text-danger mt-2">
+                    @foreach (var error in FileErrors)
+                    {
+                        <p class="mb-0">@error</p>    
+                    }
+                </div>
+                }
 
                 <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
             </EditForm>
         </div>
     </div>
-
+}
 @code {
-    private FoundBoxSGUser user = default!;
+    private FoundBoxSGUser? user;
+    private string? userProfileImageUri;
     private string? username;
     private string? phoneNumber;
     private AppUser? CurrentAppUser;
+    private List<string> FileErrors = new List<string>();
+    private const int maxFileSize = 5242880;
+    private bool isLoading = true;
+    private string? statusMessage;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
-        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        // --- START OF AUTHENTICATION CHANGES (Replaces HttpContext/UserAccessor) ---
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
+
+        if (principal.Identity is null || !principal.Identity.IsAuthenticated)
+        {
+            // Use NavigationManager to redirect, as RedirectManager is tied to HttpContext
+            NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
+
+        user = await UserManager.GetUserAsync(principal);
+        if (user is null)
+        {
+            NavigationManager.NavigateTo("Account/Login");
+            return;
+        }
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+
 
         var aspNetUserId = await UserManager.GetUserIdAsync(user);
 
@@ -82,25 +147,86 @@
             context.AppUser.Add(CurrentAppUser);
             await context.SaveChangesAsync();
         }
-        Input.Nationality ??= CurrentAppUser.Nationality;
-        Input.Region ??= CurrentAppUser.Region;
-        Input.PhoneNumber ??= phoneNumber;
+        if (string.IsNullOrEmpty(Input.Nationality)) Input.Nationality = CurrentAppUser.Nationality;
+        if (string.IsNullOrEmpty(Input.Region)) Input.Region = CurrentAppUser.Region;
+        if (string.IsNullOrEmpty(Input.PhoneNumber)) Input.PhoneNumber = phoneNumber;
+        userProfileImageUri = CurrentAppUser.ProfileImageUrl;
+
+        isLoading = false;
     }
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        FileErrors.Clear();
+        var selectedFile = e.File;
+
+        if (selectedFile is null)
+        {
+            return;    
+        }
+
+
+        if (selectedFile.Size > maxFileSize)
+        {
+            FileErrors.Add($"File exceeds the maximum size of {maxFileSize} bytes.");
+            StateHasChanged();
+            return;
+        }
+
+        if (!selectedFile.ContentType.StartsWith("image/"))
+        {
+            FileErrors.Add($"File is not a supported image format.");
+            StateHasChanged();
+            return;
+        }
+
+        using (var ms = new MemoryStream())
+        {
+            try
+            {
+                await selectedFile.OpenReadStream(maxFileSize).CopyToAsync(ms);
+                var fileBytes = ms.ToArray();
+                String base64String = Convert.ToBase64String(fileBytes);
+                userProfileImageUri = $"data:{selectedFile.ContentType};base64,{base64String}";
+
+            }
+            catch (Exception ex)
+            {
+                FileErrors.Add("No valid image files were selected.");
+                userProfileImageUri = null;
+            }
+
+        }
+
+        StateHasChanged();
+    }
+
+
 
     private async Task OnValidSubmitAsync()
     {
+        if (user is null) return;
         if (Input.PhoneNumber != phoneNumber)
         {
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                statusMessage = "Error: Failed to set phone number."; // CHANGED: Use local status
+                return;
             }
+            phoneNumber = Input.PhoneNumber;
         }
 
         if (CurrentAppUser is not null)
         {
+
             bool appUserChanged = false;
+
+            if (CurrentAppUser.ProfileImageUrl != userProfileImageUri)
+            {
+                CurrentAppUser.ProfileImageUrl = userProfileImageUri;
+                appUserChanged = true;
+            }
             if (CurrentAppUser.Nationality != Input.Nationality)
             {
                 CurrentAppUser.Nationality = Input.Nationality;
@@ -126,7 +252,7 @@
         }
 
         await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+        statusMessage = "Your profile has been updated";
     }
 
     private sealed class InputModel

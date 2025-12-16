@@ -1,8 +1,12 @@
 ﻿@using FoundBoxSG.Domain
+@using FoundBoxSG.Data
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject AuthenticationStateProvider authenticationStateProvider
 @inject NavigationManager NavigationManager
+@inject UserManager<FoundBoxSGUser> UserManager
 
 @if (Item is null)
 {
@@ -17,11 +21,31 @@ else
 {
     <!-- Right side when an item is selected -->
     <div class="col-md-9 d-none d-md-block px-5">
+        <div class="d-flex align-items-center mb-2">
+            <div class="me-3">
+            @if (!string.IsNullOrEmpty(PosterProfileImageUri))
+            {
+                <img Src="@PosterProfileImageUri"
+                     alt="Poster Profile Photo"
+                     class="rounded-circle border border-dark border-1"
+                     style="width: 50px; height: 50px; object-fit: cover; " />
+            }
+            else
+            {
+                    <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border border-dark border-1"
+                         style="width: 50px; height: 50px; font-size: 1.5rem;">
+                        👤
+                    </div>
+            }
+        </div>
+     
         <h2>@Item.Title</h2>
+        </div>
         <div class="fw-bold">@Item.ItemCategory</div>
         <div>📍 @Item.Location</div>
         <small class="text-muted">
-            Posted @Item.DateCreated
+            Posted @Item.DateCreated 
+            by @PosterName
         </small>
 
         <div class="py-4">
@@ -100,6 +124,8 @@ else
 @code {
     [Parameter] public Listings? Item { get; set; }
     private int appUserId;
+    private string? PosterProfileImageUri;
+    private string? PosterName;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -113,6 +139,29 @@ else
                 .Where(u => u.AspNetUserId == aspNetUserId)
                 .Select(u => u.Id)
                 .SingleAsync();
+
+
+            var posterAppUser = await context.AppUser
+                .Where(u => u.Id == Item.UserId)
+                .Select(u => new
+                {
+                    u.AspNetUserId,
+                    u.ProfileImageUrl
+                }
+
+                ).SingleOrDefaultAsync();
+
+            if (posterAppUser is not null)
+            {
+                PosterProfileImageUri = posterAppUser.ProfileImageUrl;
+
+                if (!string.IsNullOrEmpty(posterAppUser.AspNetUserId))
+                {
+                        var posterIdentityUser = await UserManager.FindByIdAsync(posterAppUser.AspNetUserId);
+                        PosterName = posterIdentityUser?.FullName;
+                }
+            }
+
         }
     }
 

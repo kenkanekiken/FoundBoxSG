@@ -21,6 +21,28 @@ namespace FoundBoxSG.Configurations.Entities
                 NormalizedUserName = "ADMIN@LOCALHOST.COM",
                 PasswordHash = hasher.HashPassword(null, "password"),
                 EmailConfirmed = true // Set to true, otherwise you won't be able to login
+            },
+            new FoundBoxSGUser
+            {
+                Id = "4b3a8d1e-2f5c-4e7a-9b0d-1f2g3h4i5j6k",
+                Email = "John@localhost.com",
+                NormalizedEmail = "JOHN@LOCALHOST.COM",
+                FullName = "John Kindleson",
+                UserName = "John@localhost.com",
+                NormalizedUserName = "JOHN@LOCALHOST.COM",
+                PasswordHash = hasher.HashPassword(null, "password"),
+                EmailConfirmed = true // Set to true, otherwise you won't be able to login
+            },
+            new FoundBoxSGUser
+            {
+                Id = "9c5f2b8a-1d6e-3c9b-7a4f-0e1d2c3b4a59",
+                Email = "Jane@localhost.com",
+                NormalizedEmail = "JANE@LOCALHOST.COM",
+                FullName = "Jane Kindleberry",
+                UserName = "Jane@localhost.com",
+                NormalizedUserName = "JANE@LOCALHOST.COM",
+                PasswordHash = hasher.HashPassword(null, "password"),
+                EmailConfirmed = true // Set to true, otherwise you won't be able to login
             }
             );
         }

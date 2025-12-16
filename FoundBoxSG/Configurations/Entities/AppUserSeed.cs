@@ -17,9 +17,10 @@ namespace FoundBoxSG.Configurations.Entities
                      DateCreated = DateTime.Now,
                      DateModified = null,
                      TotalListings = 1,
-                     ProfileImageUrl = null,
+                     ProfileImageUrl = "/user.png",
                      Nationality = "Singaporean",
-                     Region = "Tampines"
+                     Region = "Tampines",
+                     AspNetUserId = "4b3a8d1e-2f5c-4e7a-9b0d-1f2g3h4i5j6k"
                  },
                  new AppUser
                  {
@@ -29,9 +30,10 @@ namespace FoundBoxSG.Configurations.Entities
                      DateCreated = DateTime.Now,
                      DateModified = null,
                      TotalListings = 1,
-                     ProfileImageUrl = null,
+                     ProfileImageUrl = "/user.png",
                      Nationality = "Singaporean",
-                     Region = "Bedok"
+                     Region = "Bedok",
+                     AspNetUserId = "9c5f2b8a-1d6e-3c9b-7a4f-0e1d2c3b4a59"
                  }
              );
         }
