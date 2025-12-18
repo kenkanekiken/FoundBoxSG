@@ -41,21 +41,32 @@ else
     {
         <div class="container-fluid m-0 px-4 pb-2">
             <div class="col-12 p-3 rounded-4 bg-secondary bg-opacity-10 text-start"
-                 role="button"
-                 style="cursor:pointer;"
-                 @onclick="() => OpenChat(chat.MatchId)">
+            role="button"
+            style="cursor:pointer;"
+            @onclick="() => OpenChat(chat.MatchId)">
 
                 <div class="d-flex align-items-center gap-3">
                     <!-- Left circle icon -->
-                    <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center flex-shrink-0"
-                         style="width:56px;height:56px;">
-                        <i class="bi bi-person-fill fs-3"></i>
-                    </div>
+                    @if (!string.IsNullOrEmpty(chat.OtherUserProfileImageUrl))
+                    {
+                        <img src= "@chat.OtherUserProfileImageUrl"
+                        alt="User Profile"
+                        class = "rounded-circle flex-shrink-0"
+                        style = "width: 56px; height: 56px"/>
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width:56px;height:56px;">
+                            <i class="bi bi-person-fill fs-3"></i>
+                        </div>
+                    }
 
                     <!-- Right content -->
                     <div class="flex-grow-1 d-flex flex-column flex-md-row justify-content-between align-items-start">
                         <div>
                             <div class="fw-semibold">@chat.ListingTitle</div>
+                            <div class=" text-secondary small fw-bold">Chat with: @chat.OtherUserName</div>
                             <div class="text-muted small">Listing ID: @chat.ListingId</div>
                             <div class="text-muted small">Matched at @chat.LastUpdated</div>
                         </div>
@@ -146,6 +157,7 @@ else
     private bool isAdmin;
     private int myAppUserId;
     private string? _error;
+    private string? OtherUserName;
 
     private List<ChatRow> Chats = new();
 
@@ -157,6 +169,17 @@ else
     private int modalMatcherId;
     private int modalListingOwnerId;
     private List<Messages> modalMsgs = new();
+
+    private class ChatRow
+    {
+        public int MatchId { get; set; }
+        public int ListingId { get; set; }
+        public string? ListingTitle { get; set; }
+        public int OtherUserId { get; set; }
+        public DateTime? LastUpdated { get; set; }
+        public string? OtherUserProfileImageUrl { get; set; }
+        public string? OtherUserName { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -186,14 +209,20 @@ else
                         m => m.ListingId,
                         l => l.Id,
                         (m, l) => new { m, l })
-                    .Select(x => new ChatRow
-                    {
-                        MatchId = x.m.Id,
-                        ListingId = x.l.Id,
-                        ListingTitle = x.l.Title ?? "(No title)",
-                        OtherUserId = x.m.MatcherUserId,
-                        LastUpdated = x.m.DateModified ?? x.m.DateCreated
-                    })
+                    .Join(context.AppUser, x => x.m.MatcherUserId, u => u.Id, (x, u) => new { x.m, x.l, u })
+                    .Join(context.Users,
+                      combined => combined.u.AspNetUserId,
+                      identity => identity.Id,
+                      (combined, identity) => new ChatRow
+                      {
+                          MatchId = combined.m.Id,
+                          ListingId = combined.l.Id,
+                          ListingTitle = combined.l.Title ?? "(No title)",
+                          OtherUserId = combined.u.Id,
+                          LastUpdated = combined.m.DateModified ?? combined.m.DateCreated,
+                          OtherUserProfileImageUrl = combined.u.ProfileImageUrl,
+                          OtherUserName = identity.FullName // Now you have the name!
+                      })
                     .OrderByDescending(x => x.LastUpdated)
                     .ToListAsync();
 
@@ -209,22 +238,40 @@ else
                 return;
             }
 
-            Chats = await context.Matches
-                .Join(context.Listings,
-                    m => m.ListingId,
-                    l => l.Id,
-                    (m, l) => new { m, l })
-                .Where(x => x.m.MatcherUserId == myAppUserId || x.l.UserId == myAppUserId)
-                .Select(x => new ChatRow
-                {
-                    MatchId = x.m.Id,
-                    ListingId = x.l.Id,
-                    ListingTitle = x.l.Title ?? "(No title)",
-                    OtherUserId = x.l.UserId == myAppUserId ? x.m.MatcherUserId : x.l.UserId,
-                    LastUpdated = x.m.DateModified ?? x.m.DateCreated
-                })
-                .OrderByDescending(x => x.LastUpdated)
-                .ToListAsync();
+            // A. Chats where the current user is the LISTING OWNER (The other user is the Matcher)
+            var asListingOwner = context.Matches
+            .Join(context.Listings, m => m.ListingId, l => l.Id, (m, l) => new { m, l })
+            .Where(x => x.l.UserId == myAppUserId)
+            .Join(context.AppUser, x => x.m.MatcherUserId, u => u.Id, (x, u) => new { x.m, x.l, u })
+            .Join(context.Users, c => c.u.AspNetUserId, i => i.Id, (c, i) => new ChatRow
+            {
+                MatchId = c.m.Id,
+                ListingId = c.l.Id,
+                ListingTitle = c.l.Title,
+                OtherUserId = c.u.Id,
+                LastUpdated = c.m.DateModified ?? c.m.DateCreated,
+                OtherUserProfileImageUrl = c.u.ProfileImageUrl,
+                OtherUserName = i.FullName
+            });
+            var asMatcher = context.Matches
+            .Where(m => m.MatcherUserId == myAppUserId)
+            .Join(context.Listings, m => m.ListingId, l => l.Id, (m, l) => new { m, l })
+            .Join(context.AppUser, x => x.l.UserId, u => u.Id, (x, u) => new { x.m, x.l, u })
+            .Join(context.Users, c => c.u.AspNetUserId, i => i.Id, (c, i) => new ChatRow
+            {
+                MatchId = c.m.Id,
+                ListingId = c.l.Id,
+                ListingTitle = c.l.Title,
+                OtherUserId = c.u.Id,
+                LastUpdated = c.m.DateModified ?? c.m.DateCreated,
+                OtherUserProfileImageUrl = c.u.ProfileImageUrl,
+                OtherUserName = i.FullName
+            });
+
+            Chats = await asListingOwner
+            .Union(asMatcher)
+            .OrderByDescending(x => x.LastUpdated)
+            .ToListAsync();
 
             isLoaded = true;
         }
