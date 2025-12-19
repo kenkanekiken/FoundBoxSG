@@ -1,44 +1,126 @@
 ﻿@using FoundBoxSG.Domain
+@using FoundBoxSG.ViewModels
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 
 <div class="container-fluid pt-1">
-    <SearchBar @bind-SearchText="searchText" @bind-SearchLocation="searchLocation" />
+
+    <!-- Search + Filter -->
+    <SearchBar @bind-SearchText="searchText"
+               @bind-SearchLocation="searchLocation"
+               @bind-Filter="filter"
+               Categories="@CategoryOptions" />
+
     <div class="row">
         <SideBar Listings="FilteredListings" OnSelectItem="SelectItem" />
-        <ItemDescription Item="SelectedItem"/>
+        <ItemDescription Item="SelectedItem" />
     </div>
 </div>
+
 @code {
     private string searchText = "";
     private string searchLocation = "";
 
+    private ListingFilter filter = new();
+
     private List<Listings> AllListings = new();
-    private Listings? SelectedItem { get; set; }
+    private Listings? SelectedItem;
 
     protected override async Task OnInitializedAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
+
         AllListings = await context.Listings
-            .OrderByDescending(l => l.DateCreated)   // 🔹 newest first
+            .OrderByDescending(l => l.DateCreated)
             .ToListAsync();
-        // Default: show the latest listing
-        if (AllListings.Any())
-        {
-            SelectedItem = AllListings.First(); // show latest listing
-        }
+
+        SelectedItem = AllListings.FirstOrDefault();
     }
 
-    private IEnumerable<Listings> FilteredListings =>
-            AllListings.Where(x =>
-                (string.IsNullOrWhiteSpace(searchText) ||
-                    x.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
-                (string.IsNullOrWhiteSpace(searchLocation) ||
-                    x.Location.Contains(searchLocation, StringComparison.OrdinalIgnoreCase)));
+    // Categories
+    private List<string> CategoryOptions =>
+        AllListings
+            .Select(x => (x.ItemCategory ?? "").Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
 
+    // SideBar filter
+    private List<Listings> FilteredListings => ApplyFilters().ToList();
+
+    private IEnumerable<Listings> ApplyFilters()
+    {
+        IEnumerable<Listings> q = AllListings;
+
+        // Search: Title
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var t = searchText.Trim();
+            q = q.Where(x => (x.Title ?? "").Contains(t, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Search: Location
+        if (!string.IsNullOrWhiteSpace(searchLocation))
+        {
+            var loc = searchLocation.Trim();
+            q = q.Where(x => (x.Location ?? "").Contains(loc, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Filter: Found/Lost
+        if (filter.Type != ListingTypeFilter.All)
+        {
+            var wanted = filter.Type == ListingTypeFilter.Found ? "Found" : "Lost";
+            q = q.Where(x => string.Equals((x.ListingType ?? "").Trim(), wanted, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Filter: Category
+        if (!string.IsNullOrWhiteSpace(filter.Category))
+        {
+            var catWanted = filter.Category.Trim();
+            q = q.Where(x => string.Equals((x.ItemCategory ?? "").Trim(), catWanted, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Sort
+        q = filter.Sort == SortFilter.Latest
+            ? q.OrderByDescending(x => x.DateCreated)
+            : q.OrderBy(x => x.DateCreated);
+
+        return q;
+    }
+
+    // Callbacks from SearchFilterBar
+    private Task OnSearchTextChanged(string value)
+    {
+        searchText = value ?? "";
+        UpdateSelectedItemIfNeeded();
+        return Task.CompletedTask;
+    }
+
+    private Task OnSearchLocationChanged(string value)
+    {
+        searchLocation = value ?? "";
+        UpdateSelectedItemIfNeeded();
+        return Task.CompletedTask;
+    }
+
+    private Task OnFilterChanged(ListingFilter value)
+    {
+        filter = value ?? new ListingFilter();
+        UpdateSelectedItemIfNeeded();
+        return Task.CompletedTask;
+    }
 
     private void SelectItem(Listings item)
     {
         SelectedItem = item;
+    }
+
+    private void UpdateSelectedItemIfNeeded()
+    {
+        if (SelectedItem == null || !FilteredListings.Any(x => x.Id == SelectedItem.Id))
+        {
+            SelectedItem = FilteredListings.FirstOrDefault();
+        }
     }
 }
