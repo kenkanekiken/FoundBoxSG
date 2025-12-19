@@ -26,26 +26,6 @@
                 @if (currentStep == 1)
                 {
                     <h3> Basic Details: </h3>
-                    <div class="mb-3">
-                        <label class="form-label"> Listing Type:</label>
-                        <InputRadioGroup Name="listingType" @bind-value="Listings.ListingType" class="btn-group">
-                            <InputRadio Name="listingType"
-                                        Value="@("Found")"
-                                        class="btn-check"
-                                        id="listing-found" />
-                            <label class="btn btn-outline-primary" for="listing-found">
-                                Found
-                            </label>
-                            <InputRadio Name="listingType"
-                                        Value="@("Lost")"
-                                        class="btn-check"
-                                        id="listing-lost" />
-                            <label class="btn btn-outline-primary" for="listing-lost">
-                                Lost
-                            </label>
-                        </InputRadioGroup>
-
-                    </div>
 
                     <div class="mb-3">
                         <label for="title" class="form-label">Title:</label>
@@ -110,7 +90,7 @@
                     }
                     @if (Listings.Images.Any())
                     {
-                        <div class="d-flex flex_wrap gap-3">
+                        <div class="d-flex flex-wrap gap-3">
                             @foreach (var imageUri in Listings.Images.ToList())
                             {
                                 <div class="card p-2" style="width: 200px">
@@ -281,7 +261,6 @@
         }
 
         // update what user edits
-        existing.ListingType = Listings.ListingType;
         existing.Title = Listings.Title;
         existing.Description = Listings.Description;
         existing.ItemCategory = Listings.ItemCategory;
