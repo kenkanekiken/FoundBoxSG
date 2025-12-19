@@ -45,8 +45,10 @@ else
         <div>📍 @Item.Location</div>
         <small class="text-muted">
             Posted @Item.DateCreated 
-            by @PosterName
         </small>
+        <div class="text-muted">
+            by @PosterName
+        </div>
 
         <div class="py-4">
             <!-- Change the button's onclick to pass the required listingId parameter -->
@@ -180,7 +182,7 @@ else
         var listing = await context.Listings.FirstAsync(l => l.Id == listingId);
 
         if (listing.UserId == myAppUserId)
-            return; // or show message: can't claim your own listing
+            return; // or show message: can't claim own listing
 
         var match = await context.Matches.FirstOrDefaultAsync(m =>
             m.ListingId == listingId && m.MatcherUserId == myAppUserId);

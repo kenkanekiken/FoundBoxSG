@@ -1,4 +1,5 @@
 ﻿@using FoundBoxSG.Domain
+@using FoundBoxSG.ViewModels
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 
@@ -10,8 +11,12 @@
                 <span class="input-group-text">
                     <i class="bi bi-search fs-2"></i>
                 </span>
-                <input type="search" class="form-control" placeholder="Title" @bind="SearchText" @oninput="OnSearchChanged" autofocus />
-                @* <input type="text" class="form-control" placeholder="Items" aria-label="search"> *@
+                <input type="search"
+                       class="form-control"
+                       placeholder="Title"
+                       value="@SearchText"
+                       @oninput="OnSearchChanged"
+                       autofocus />
             </div>
         </div>
 
@@ -21,39 +26,136 @@
                 <span class="input-group-text">
                     <i class="bi bi-pin-map-fill fs-2"></i>
                 </span>
-                <input type="search" class="form-control" placeholder="Location" @bind="SearchLocation" @oninput="OnSearchLocationChanged" autofocus>
+                <input type="search"
+                       class="form-control"
+                       placeholder="Location"
+                       value="@SearchLocation"
+                       @oninput="OnSearchLocationChanged" />
             </div>
         </div>
     </div>
 </div>
-<!--All Filters-->
+
+<!-- Filter Button -->
 <div class="p-3">
-    <button class="d-flex align-items-center text-decoration-none text-dark border-0 bg-transparent">
+    <button type="button"
+            class="d-flex align-items-center text-decoration-none text-dark border-0 bg-transparent"
+            @onclick="OpenFilter">
         <i class="bi bi-filter fs-2 me-2"></i>
         <span>All Filters</span>
     </button>
 </div>
 
+@if (showFilterModal)
+{
+    <!-- Backdrop -->
+    <div class="modal-backdrop fade show"></div>
+
+    <!-- Modal -->
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Filters</h5>
+                    <button type="button" class="btn-close" @onclick="CloseFilter"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- Listing Type -->
+                    <div class="mb-3">
+                        <label class="form-label">Listing Type</label>
+                        <InputSelect class="form-select" @bind-Value="draftFilter.Type">
+                            <option value="@ListingTypeFilter.All">All</option>
+                            <option value="@ListingTypeFilter.Found">Found</option>
+                            <option value="@ListingTypeFilter.Lost">Lost</option>
+                        </InputSelect>
+                    </div>
+
+                    <!-- Category (from Listings table distinct) -->
+                    <div class="mb-3">
+                        <label class="form-label">Item Category</label>
+                        <select class="form-select" @bind="draftCategory">
+                            <option value="">All</option>
+                            @foreach (var c in Categories)
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="mb-3">
+                        <label class="form-label">Sort By</label>
+                        <InputSelect class="form-select" @bind-Value="draftFilter.Sort">
+                            <option value="@SortFilter.Latest">Latest Post</option>
+                            <option value="@SortFilter.Oldest">Longest Post Time (Oldest)</option>
+                        </InputSelect>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" @onclick="ClearFilter">Clear</button>
+                    <button class="btn btn-secondary" @onclick="CloseFilter">Cancel</button>
+                    <button class="btn btn-primary" @onclick="ApplyFilters">Apply</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
 
 @code {
-    // Search Text Parameter
-    [Parameter] public string SearchText { get; set; }
+    [Parameter] public string SearchText { get; set; } = "";
     [Parameter] public EventCallback<string> SearchTextChanged { get; set; }
 
-    private async Task OnSearchChanged(ChangeEventArgs e)
-    {
-        var value = e.Value?.ToString() ?? string.Empty;
-        SearchText = value;  // to update local component state
-        await SearchTextChanged.InvokeAsync(value);  // to tell parent about the change
-    }
-    // Location parameters
-    [Parameter] public string SearchLocation { get; set; }
+    [Parameter] public string SearchLocation { get; set; } = "";
     [Parameter] public EventCallback<string> SearchLocationChanged { get; set; }
 
-    private async Task OnSearchLocationChanged(ChangeEventArgs e)
+    [Parameter] public ListingFilter Filter { get; set; } = new();
+    [Parameter] public EventCallback<ListingFilter> FilterChanged { get; set; }
+
+    [Parameter] public List<string> Categories { get; set; } = new();
+
+    private bool showFilterModal;
+    private ListingFilter draftFilter = new();
+    private string? draftCategory;
+
+    private Task OnSearchChanged(ChangeEventArgs e)
+        => SearchTextChanged.InvokeAsync(e.Value?.ToString() ?? "");
+
+    private Task OnSearchLocationChanged(ChangeEventArgs e)
+        => SearchLocationChanged.InvokeAsync(e.Value?.ToString() ?? "");
+
+    private void OpenFilter()
     {
-        var value = e.Value?.ToString() ?? string.Empty;
-        SearchLocation = value;  // to update local component state
-        await SearchLocationChanged.InvokeAsync(value);  // to tell parent about the change
+        draftFilter = new ListingFilter { Type = Filter.Type, Sort = Filter.Sort, Category = Filter.Category };
+        draftCategory = draftFilter.Category;
+        showFilterModal = true;
+    }
+
+    private void CloseFilter() => showFilterModal = false;
+
+    private Task ClearFilter()
+    {
+        draftFilter = new ListingFilter();
+        draftCategory = null;
+        StateHasChanged(); // updates dropdowns to clear it
+        return Task.CompletedTask;
+    }
+
+    private async Task ApplyFilters()
+    {
+        draftFilter.Category = string.IsNullOrWhiteSpace(draftCategory) ? null : draftCategory;
+
+        showFilterModal = false;
+        await FilterChanged.InvokeAsync(new ListingFilter
+        {
+            Type = draftFilter.Type,
+            Category = draftFilter.Category,
+            Sort = draftFilter.Sort
+        });
     }
 }

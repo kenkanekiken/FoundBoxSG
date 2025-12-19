@@ -73,26 +73,45 @@ else
                             <div class="text-muted small">Posted @item.DateCreated</div>
                         </div>
 
-                        <div class="row mt-2 mt-md-0">
-                            <div class="py-1 col-12">
-                                <button class="btn btn-secondary border-0 rounded-2 w-100"
-                                        @onclick="() => ViewCase(item)">
-                                    View Case
-                                </button>
+                        @if (isAdmin)
+                        {
+                            <div class="row mt-2 mt-md-0">
+                                <div class="py-1 col-12">
+                                    <button class="btn btn-secondary border-0 rounded-2 w-100"
+                                            @onclick="() => ViewCase(item)">
+                                        View Case
+                                    </button>
+                                </div>
+                                <div class="py-1 col-12">
+                                    <button class="btn btn-secondary border-0 rounded-2 w-100"
+                                            @onclick="() => DeleteCase(item)">
+                                        Delete Case
+                                    </button>
+                                </div>
                             </div>
-                            <div class="py-1 col-12">
-                                <button class="btn btn-secondary border-0 rounded-2 w-100"
-                                        @onclick="() => EditCase(item)">
-                                    Edit Case
-                                </button>
+                        } else
+                        {
+                            <div class="row mt-2 mt-md-0">
+                                <div class="py-1 col-12">
+                                    <button class="btn btn-secondary border-0 rounded-2 w-100"
+                                            @onclick="() => ViewCase(item)">
+                                        View Case
+                                    </button>
+                                </div>
+                                <div class="py-1 col-12">
+                                    <button class="btn btn-secondary border-0 rounded-2 w-100"
+                                            @onclick="() => EditCase(item)">
+                                        Edit Case
+                                    </button>
+                                </div>
+                                <div class="py-1 col-12">
+                                    <button class="btn btn-secondary border-0 rounded-2 w-100"
+                                            @onclick="() => DeleteCase(item)">
+                                        Delete Case
+                                    </button>
+                                </div>
                             </div>
-                            <div class="py-1 col-12">
-                                <button class="btn btn-secondary border-0 rounded-2 w-100"
-                                        @onclick="() => DeleteCase(item)">
-                                    Delete Case
-                                </button>
-                            </div>
-                        </div>
+                        }
                     </div>
 
                 </div>
