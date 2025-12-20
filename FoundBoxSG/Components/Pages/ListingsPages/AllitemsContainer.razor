@@ -31,6 +31,8 @@
         using var context = await DbFactory.CreateDbContextAsync();
 
         AllListings = await context.Listings
+            .Include(l => l.User)
+            .Where(l => l.User == null || l.User.IsBanned == false)
             .OrderByDescending(l => l.DateCreated)
             .ToListAsync();
 
@@ -51,7 +53,7 @@
 
     private IEnumerable<Listings> ApplyFilters()
     {
-        IEnumerable<Listings> q = AllListings;
+        IEnumerable<Listings> q = AllListings.Where(x => x.User == null || x.User.IsBanned == false);
 
         // Search: Title
         if (!string.IsNullOrWhiteSpace(searchText))

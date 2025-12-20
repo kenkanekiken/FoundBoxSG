@@ -3,6 +3,8 @@
     public class Listings : BaseDomainModel
     {
         public int UserId { get; set; }
+
+        public virtual AppUser? User { get; set; }
         public string? ListingType { get; set; } 
         public string? Title { get; set; }
         public string? Description { get; set; }

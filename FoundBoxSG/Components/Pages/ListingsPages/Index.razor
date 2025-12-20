@@ -20,8 +20,10 @@
     private FoundBoxSGContext context = default!;
     PaginationState paginationState = new PaginationState { ItemsPerPage = 10 };
     private string searchText = "";
-    private IQueryable<Listings> FilteredListings => context.Listings.Where(c =>
-    c.Title.Contains(searchText));
+    private IQueryable<Listings> FilteredListings => context.Listings
+        .Include(l => l.User) // Join the AppUser table
+        .Where(l => (l.User == null || l.User.IsBanned == false) && 
+                    (string.IsNullOrEmpty(searchText) || l.Title.Contains(searchText)));
 
     protected override void OnInitialized()
     {

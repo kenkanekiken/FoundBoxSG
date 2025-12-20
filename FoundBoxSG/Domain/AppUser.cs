@@ -12,5 +12,7 @@ namespace FoundBoxSG.Domain
         public string? ProfileImageUrl { get; set; }
         public string? Nationality { get; set; }
         public string? Region { get; set; }
+
+        public bool IsBanned { get; set; } = false;
     }
 }
