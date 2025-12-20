@@ -120,16 +120,6 @@
                         <InputText id="location" @bind-Value="Listings.Location" class="form-control" />
                         <ValidationMessage For="() => Listings.Location" class="text-danger" />
                     </div>
-                    <div class="mb-3" hidden>
-                        <label for="createdby" class="form-label">CreatedBy:</label> 
-                        <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" /> 
-                        <ValidationMessage For="() => Listings.CreatedBy" class="text-danger" /> 
-                    </div>        
-                    <div class="mb-3" hidden>
-                        <label for="modifiedby" class="form-label">ModifiedBy:</label> 
-                        <InputText id="modifiedby" @bind-Value="Listings.ModifiedBy" class="form-control" /> 
-                        <ValidationMessage For="() => Listings.ModifiedBy" class="text-danger" /> 
-                    </div>   
                 }
                 <hr />
                 <div class="d-flex justify-content-between">

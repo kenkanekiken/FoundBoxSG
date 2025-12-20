@@ -12,6 +12,12 @@ builder.Services.AddDbContextFactory<FoundBoxSGContext>(options =>
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
+builder.Services.AddAuthorization(options =>
+{
+    // You can define a specific policy here if you prefer
+    options.AddPolicy("ActiveUser", policy => policy.RequireRole("User", "Administrator"));
+});
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add services to the container.
@@ -35,6 +41,11 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.Zero;
+});
+
 builder.Services.AddIdentityCore<FoundBoxSGUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<FoundBoxSGContext>()
@@ -54,9 +65,25 @@ if (!app.Environment.IsDevelopment())
     app.UseMigrationsEndPoint();
 }
 
+
+
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+app.Use(async (context, next) =>
+{
+    var user = context.User;
+    if (user.Identity?.IsAuthenticated == true && user.IsInRole("Banned"))
+    {
+        // If they are on the Logout page, let them through so they can clear their session
+        if (!context.Request.Path.StartsWithSegments("/Account/Logout"))
+        {
+            context.Response.Redirect("/Account/Logout");
+            return;
+        }
+    }
+    await next();
+});
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()

@@ -41,7 +41,21 @@ else
      
         <h2>@Item.Title</h2>
         </div>
-        <div class="fw-bold">@Item.ItemCategory</div>
+        <div class="d-inline-block mb-1">
+            @if (Item.ListingType == "Lost")
+            {
+                <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle me-2">
+                    @Item.ListingType
+                </span>
+            }
+            else
+            {
+                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle me-2">
+                    @Item.ListingType
+                </span>
+            }
+            <div class="fw-bold d-inline-block">@Item.ItemCategory</div>
+        </div>
         <div>📍 @Item.Location</div>
         <small class="text-muted">
             Posted @Item.DateCreated 
