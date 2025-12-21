@@ -58,7 +58,7 @@ else
                             </div>
 
                             <div class="mt-2 text-primary small fw-semibold">
-                                <i class="bi bi-journal-text"></i> Total Listings: @user.TotalListings
+                                <i class="bi bi-journal-text"></i> Total Listings: @(user.Listings?.Count ?? 0)
                             </div>
                         </div>
 
@@ -68,15 +68,21 @@ else
                                 <i class="bi bi-eye me-1"></i> View & Moderate
                             </button>
 
-                            <button class="btn btn-sm btn-outline-secondary w-100 rounded-2"
-                                    @onclick="@(() => NavigationManager.NavigateTo($"appusers/edit?id={user.Id}"))">
-                                <i class="bi bi-pencil me-1"></i> Edit User
-                            </button>
+                            @if (user.IsBanned == false)
+                            {
+                                <button class="btn btn-outline-danger border-danger rounded-2 btn-sm w-100"
+                                @onclick="@(() => BanUser(user))">
+                                    <i class="bi bi-ban-fill me-1"></i> Ban user
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-success border-success rounded-2 btn-sm w-100"
+                                        @onclick="@(() => UnBanUser(user))">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Unban user
+                                </button>
+                            }
 
-                            <button class="btn btn-outline-danger border-danger rounded-2 btn-sm w-100"
-                                    @onclick="@(() => BanUser(user))">
-                                <i class="bi bi-ban-fill me-1"></i> Ban user
-                            </button>
                         </div>
                     </div>
 
@@ -98,8 +104,17 @@ else
     {
         using var context = await DbFactory.CreateDbContextAsync();
         // We INCLUDE AspNetUser to get the FullName and Email
+
+        var adminRoleId = await context.Roles
+            .Where(r => r.Name == "Administrator")
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
         AppUsers = await context.AppUser
             .Include(u => u.AspNetUser)
+            .Include(u => u.Listings)
+            .Where(u => !context.UserRoles
+            .Any(ur => ur.UserId == u.AspNetUserId && ur.RoleId == adminRoleId))
             .OrderByDescending(u => u.DateCreated)
             .ToListAsync();
     }
@@ -127,5 +142,32 @@ else
         }
 
         await LoadUsers();
+        StateHasChanged();
+    }
+
+    private async Task UnBanUser(AppUser user)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var appUserEntity = await context.AppUser.FindAsync(user.Id);
+
+        if (appUserEntity != null)
+        {
+            appUserEntity.IsBanned = false;
+            context.AppUser.Update(appUserEntity);
+            await context.SaveChangesAsync();
+
+        }
+
+        var identityUser = await UserManager.FindByIdAsync(user.AspNetUserId);
+        if (identityUser != null)
+        {
+            var currentRoles = await UserManager.GetRolesAsync(identityUser);
+            await UserManager.RemoveFromRolesAsync(identityUser, currentRoles);
+            await UserManager.AddToRoleAsync(identityUser, "User");
+            await UserManager.UpdateSecurityStampAsync(identityUser);
+        }
+
+        await LoadUsers();
+        StateHasChanged();
     }
 }

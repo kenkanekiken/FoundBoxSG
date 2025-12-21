@@ -1,6 +1,26 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 <div class="page">
+    <AuthorizeView Roles="Banned">
+        <Authorized>
+            @* This is what BANNED users see *@
+            <div class="container mt-5">
+                <div class="alert alert-danger shadow-sm p-5 text-center">
+                    <i class="bi bi-exclamation-octagon-fill display-1"></i>
+                    <h1 class="mt-3">Account Banned</h1>
+                    <p class="lead">Your access to FoundBoxSG has been revoked.</p>
+                    <hr />
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type = "hidden"  name= "ReturnUrl" value="">
+                        <button type="submit" class =" btn btn-outline-danger">
+                            Logout and Exit
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
     <NavMenu />
     <main class="content-wrapper">
         @Body
@@ -9,10 +29,13 @@
     {
         <Footer />
     }
-</div>
+
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
+</div>
+        </NotAuthorized>
+</AuthorizeView>
 </div>

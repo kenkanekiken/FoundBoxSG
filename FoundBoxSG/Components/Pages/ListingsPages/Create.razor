@@ -6,6 +6,7 @@
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
+@using System.Security.Claims;
 @rendermode InteractiveServer
 
 <PageTitle>Create</PageTitle>
@@ -154,7 +155,6 @@
 @code {
     [SupplyParameterFromForm]
     private Listings Listings { get; set; } = new();
-    public string imageUri;
     private const int maxFileSize = 5242880;
     private const int maxFiles = 5;
     private List<string> FileErrors = new List<string>();
@@ -246,21 +246,31 @@
 
     private async Task AddListings()
     {
-        using var context = DbFactory.CreateDbContext();
+        try
+        {
+            using var context = DbFactory.CreateDbContext();
 
-        int appUserId = await GetAppUserIntIdAsync();
+            int appUserId = await GetAppUserIntIdAsync();
 
-        //Set the userId to the CreatedBy and UpdatedBy fields
-        Listings.CreatedBy = userId;
-        Listings.ModifiedBy = userId;
-        //Set the DateCreated and DateModified fields to current date and time
-        Listings.DateCreated = DateTime.Now;
-        Listings.DateModified = DateTime.Now;
-        Listings.UserId = appUserId;
+            //Set the userId to the CreatedBy and UpdatedBy fields
+            Listings.CreatedBy = userId;
+            Listings.ModifiedBy = userId;
+            //Set the DateCreated and DateModified fields to current date and time
+            Listings.DateCreated = DateTime.Now;
+            Listings.DateModified = DateTime.Now;
+            Listings.UserId = appUserId;
 
-        context.Listings.Add(Listings);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/listings");
+            context.Listings.Add(Listings);
+            await context.SaveChangesAsync();
+            NavigationManager.NavigateTo("/listings");
+        }
+
+        catch (Exception ex)
+        {
+            FileErrors.Add($"Error creating listing: {ex.Message}");
+            StateHasChanged();
+        }
+
     }
 
     private string userId = "System"; // Replace with actual user identification logic
@@ -273,7 +283,7 @@
         }
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var userIdClaim = user.FindFirst("userId");
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim != null)
         {
             userId = userIdClaim.Value;
