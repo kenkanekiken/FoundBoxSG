@@ -1,5 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@inject AuthenticationStateProvider Auth
+@inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @implements IDisposable
 @inject NavigationManager NavigationManager
 
@@ -8,22 +11,69 @@
         <!-- Brand -->
         <a class="navbar-brand" href="">FoundBox</a>
 
-        <!-- Hamburger button (mobile) -->
-        <button class="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#mainNavbar"
-                aria-controls="mainNavbar"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <!-- Right-side controls on mobile: bell + hamburger -->
+        <div class="d-flex align-items-center ms-auto d-lg-none">
+            <!-- Mobile bell -->
+            <AuthorizeView>
+                <Authorized Context="userContext">
+                    <AuthorizeView Roles="User">
+                        <Authorized>
+                            <NavLink class="nav-link position-relative p-0 me-2" href="messages" style="display:flex; align-items:center;">
+                                <i class="bi bi-bell fs-5 text-white"></i>
 
+                                @if (unreadCount > 0)
+                                {
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        @unreadCount
+                                    </span>
+                                }
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+                </Authorized>
+            </AuthorizeView>
+
+            <!-- Hamburger (mobile only) -->
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar"
+                    aria-controls="mainNavbar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
         <!-- Collapsible menu -->
         <div class="collapse navbar-collapse" id="mainNavbar">
             <!-- Left side nav links -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-
+                <!-- Desktop bell -->
+                <AuthorizeView>
+                    <Authorized Context="userContext">
+                        <AuthorizeView Roles="User">
+                            <Authorized>
+                                <li class="nav-item d-none d-lg-flex align-items-center position-relative">
+                                    @if (unreadCount > 0)
+                                    {
+                                        <NavLink class="nav-link position-relative" href="messages">
+                                            <i class="bi bi-bell"></i>
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                @unreadCount
+                                            </span>
+                                        </NavLink>
+                                    }
+                                    else
+                                    {
+                                        <span class="nav-link position-relative">
+                                            <i class="bi bi-bell"></i>
+                                        </span>
+                                    }
+                                </li>
+                            </Authorized>
+                        </AuthorizeView>
+                    </Authorized>
+                </AuthorizeView>
                 <AuthorizeView>
                     <Authorized Context="userContext">
                         <AuthorizeView Roles="Administrator">
@@ -96,11 +146,39 @@
 
 @code {
     private string? currentUrl;
+    private int unreadCount;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+
+        var user = (await Auth.GetAuthenticationStateAsync()).User;
+        if (!user.Identity?.IsAuthenticated ?? true) return;
+
+        var aspNetUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var myAppUserId = await db.AppUser
+            .Where(u => u.AspNetUserId == aspNetUserId)
+            .Select(u => u.Id)
+            .SingleOrDefaultAsync();
+
+        // unreadCount = await db.Messages
+        //     .CountAsync(m =>
+        //         !m.IsRead &&
+        //         m.SenderUserId != myAppUserId
+        //     );
+
+        unreadCount =
+            await (from msg in db.Messages
+                join match in db.Matches on msg.MatchId equals match.Id
+                join listing in db.Listings on match.ListingId equals listing.Id
+                let receiverId = (msg.SenderUserId == match.MatcherUserId) ? listing.UserId : match.MatcherUserId
+                where !msg.IsRead && receiverId == myAppUserId
+                select msg.Id)
+                .CountAsync();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

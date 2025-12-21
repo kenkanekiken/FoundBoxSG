@@ -148,13 +148,46 @@
         // allow only matcher or listing owner
         authorized = (match.MatcherUserId == myAppUserId) || (listing.UserId == myAppUserId);
 
+        // if (authorized)
+        // {
+        //     msgs = await context.Messages
+        //         .Where(m => m.MatchId == matchId)
+        //         .OrderBy(m => m.DateCreated)
+        //         .ToListAsync();
+        // }
+
         if (authorized)
         {
             msgs = await context.Messages
                 .Where(m => m.MatchId == matchId)
                 .OrderBy(m => m.DateCreated)
                 .ToListAsync();
+
+            // ✅ Determine roles for THIS match
+            var matcherId = match.MatcherUserId;
+            var listingOwnerId = listing.UserId;
+
+            // ✅ Mark only messages that are actually addressed to ME
+            var unread = msgs.Where(m =>
+            {
+                var receiverId =
+                    (m.SenderUserId == matcherId)
+                        ? listingOwnerId   // matcher sent → owner receives
+                        : matcherId;       // owner sent → matcher receives
+
+                return receiverId == myAppUserId && !m.IsRead;
+            }).ToList();
+
+            if (unread.Count > 0)
+            {
+                foreach (var m in unread)
+                    m.IsRead = true;
+
+                await context.SaveChangesAsync();
+            }
         }
+
+
 
         loaded = true;
     }
@@ -170,6 +203,7 @@
             MatchId = matchId,
             SenderUserId = myAppUserId,
             Content = draft.Trim(),
+            IsRead = false,
             DateCreated = DateTime.Now,
             DateModified = DateTime.Now
         });
