@@ -1,6 +1,8 @@
 ﻿@page "/messages/chat/{matchId:int}"
+@using FoundBoxSG.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using FoundBoxSG.Domain
@@ -12,7 +14,8 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @rendermode InteractiveServer
-
+@inject EmailService EmailService
+@inject UserManager<FoundBoxSGUser> UserManager
 
 
 <PageTitle>ChatBox</PageTitle>
@@ -192,13 +195,39 @@
         loaded = true;
     }
     private void GoBack() => NavigationManager.NavigateTo("/messages");
+//     private async Task Send()
+//     {
+//         if (!authorized || string.IsNullOrWhiteSpace(draft)) return;
+
+//         using var context = await DbFactory.CreateDbContextAsync();
+
+//         context.Messages.Add(new Messages
+//         {
+//             MatchId = matchId,
+//             SenderUserId = myAppUserId,
+//             Content = draft.Trim(),
+//             IsRead = false,
+//             DateCreated = DateTime.Now,
+//             DateModified = DateTime.Now
+//         });
+
+//         await context.SaveChangesAsync();
+//         draft = "";
+
+//
+//         msgs = await context.Messages
+//             .Where(m => m.MatchId == matchId)
+//             .OrderBy(m => m.DateCreated)
+//             .ToListAsync();
+//     }
     private async Task Send()
     {
-        if (!authorized || string.IsNullOrWhiteSpace(draft)) return;
+        if (!authorized || string.IsNullOrWhiteSpace(draft))
+            return;
 
-        using var context = await DbFactory.CreateDbContextAsync();
+        await using var context = await DbFactory.CreateDbContextAsync();
 
-        context.Messages.Add(new Messages
+        var message = new Messages
         {
             MatchId = matchId,
             SenderUserId = myAppUserId,
@@ -206,17 +235,62 @@
             IsRead = false,
             DateCreated = DateTime.Now,
             DateModified = DateTime.Now
-        });
+        };
 
+        context.Messages.Add(message);
         await context.SaveChangesAsync();
+
         draft = "";
 
-        // refresh messages after sending
+        var match = await context.Matches.FindAsync(matchId);
+        if (match is null) return;
+
+        var listing = await context.Listings.FindAsync(match.ListingId);
+        if (listing is null) return;
+
+        int receiverAppUserId =
+            (myAppUserId == match.MatcherUserId)
+                ? listing.UserId
+                : match.MatcherUserId;
+
+        var receiverAspNetUserId = await context.AppUser
+            .Where(u => u.Id == receiverAppUserId)
+            .Select(u => u.AspNetUserId)
+            .SingleOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(receiverAspNetUserId))
+            return;
+
+        var receiverIdentityUser =
+            await UserManager.FindByIdAsync(receiverAspNetUserId);
+
+        if (!string.IsNullOrWhiteSpace(receiverIdentityUser?.Email))
+        {
+            var chatUrl = NavigationManager.BaseUri + "messages/chat/" + matchId;
+
+            var body =
+                "<p>Hello " + receiverIdentityUser.UserName + ",</p>" +
+                "<p>You have received a new message regarding:</p>" +
+                "<p><b>" + listing.Title + "</b></p>" +
+                "<p>— FoundBox Team</p>";
+
+            Console.WriteLine("EMAIL SEND ATTEMPT");
+
+            await EmailService.SendAsync(
+                receiverIdentityUser.Email,
+                "📩 New message on FoundBox",
+                body
+            );
+            Console.WriteLine("EMAIL SENT OK");
+
+        }
+
         msgs = await context.Messages
             .Where(m => m.MatchId == matchId)
             .OrderBy(m => m.DateCreated)
             .ToListAsync();
     }
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !e.ShiftKey)
