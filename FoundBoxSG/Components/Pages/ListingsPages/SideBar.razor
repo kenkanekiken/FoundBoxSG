@@ -130,11 +130,6 @@
 
 
 
-@* @code {
-    [Parameter] public IEnumerable<Listings> Listings { get; set; }
-    [Parameter] public EventCallback<Listings> OnSelectItem { get; set; }
-} *@
-
 @code {
     [Parameter] public IEnumerable<Listings> Listings { get; set; }
     [Parameter] public EventCallback<Listings> OnSelectItem { get; set; }
@@ -143,12 +138,6 @@
     private int appUserId;
     private string? PosterProfileImageUri;
     private string? PosterName;
-
-    // private void OpenModal(Listings item)
-    // {
-    //     selected = item;
-    //     showModal = true;
-    // }
     private async Task OpenModal(Listings item)
     {
         selected = item;

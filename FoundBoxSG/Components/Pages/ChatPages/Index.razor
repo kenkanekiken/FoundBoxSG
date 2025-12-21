@@ -151,14 +151,6 @@
         // allow only matcher or listing owner
         authorized = (match.MatcherUserId == myAppUserId) || (listing.UserId == myAppUserId);
 
-        // if (authorized)
-        // {
-        //     msgs = await context.Messages
-        //         .Where(m => m.MatchId == matchId)
-        //         .OrderBy(m => m.DateCreated)
-        //         .ToListAsync();
-        // }
-
         if (authorized)
         {
             msgs = await context.Messages
@@ -195,31 +187,6 @@
         loaded = true;
     }
     private void GoBack() => NavigationManager.NavigateTo("/messages");
-//     private async Task Send()
-//     {
-//         if (!authorized || string.IsNullOrWhiteSpace(draft)) return;
-
-//         using var context = await DbFactory.CreateDbContextAsync();
-
-//         context.Messages.Add(new Messages
-//         {
-//             MatchId = matchId,
-//             SenderUserId = myAppUserId,
-//             Content = draft.Trim(),
-//             IsRead = false,
-//             DateCreated = DateTime.Now,
-//             DateModified = DateTime.Now
-//         });
-
-//         await context.SaveChangesAsync();
-//         draft = "";
-
-//
-//         msgs = await context.Messages
-//             .Where(m => m.MatchId == matchId)
-//             .OrderBy(m => m.DateCreated)
-//             .ToListAsync();
-//     }
     private async Task Send()
     {
         if (!authorized || string.IsNullOrWhiteSpace(draft))
