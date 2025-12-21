@@ -1,49 +1,173 @@
 ﻿@page "/appusers"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.Security.Claims
 @using FoundBoxSG.Domain
 @using FoundBoxSG.Data
-@implements IAsyncDisposable
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject UserManager<FoundBoxSGUser> UserManager
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Administrator")]
 
-<PageTitle>Index</PageTitle>
+<PageTitle>User Management</PageTitle>
 
-<div class="content px-4">
-    <h1>Index</h1>
-
-    <p>
-        <a href="appusers/create">Create New</a>
-    </p>
-
-    <QuickGrid Class="table" Items="context.AppUser">
-        <PropertyColumn Property="appuser => appuser.ProfileImageUrl" />
-        <PropertyColumn Property="appuser => appuser.Nationality" />
-        <PropertyColumn Property="appuser => appuser.Region" />
-        <PropertyColumn Property="appuser => appuser.CreatedBy" />
-        <PropertyColumn Property="appuser => appuser.ModifiedBy" />
-        <PropertyColumn Property="appuser => appuser.DateCreated" Sortable="true" Format="dd/MM/yyyy" />
-        <PropertyColumn Property="appuser => appuser.DateModified" Format="dd/MM/yyyy" />
-
-        <TemplateColumn Context="appuser">
-            <a href="@($"appusers/edit?id={appuser.Id}")">Edit</a> |
-            <a href="@($"appusers/details?id={appuser.Id}")">Details</a>
-            <AuthorizeView Roles="Administrator">
-                |  <a href="@($"appusers/delete?id={appuser.Id}")">Delete</a>
-            </AuthorizeView>
-        </TemplateColumn>
-    </QuickGrid>
+<div class="container-fluid py-4">
+    <h2 class="m-0 pt-1 pb-3 px-4 fw-normal">User Management</h2>
+    <span class="px-4 text-muted">Manage Registered Users and their activities</span>
+   
 </div>
-@code {
-    private FoundBoxSGContext context = default!;
 
-    protected override void OnInitialized()
+@if (AppUsers == null)
+{
+    <div class="px-4 text-muted">Loading users...</div>
+}
+else if (!AppUsers.Any())
+{
+    <div class="px-4 text-muted">No users found in the system.</div>
+}
+else
+{
+    @foreach (var user in AppUsers)
     {
-        context = DbFactory.CreateDbContext();
+        <div class="container-fluid m-0 px-4 pb-3">
+            <div class="p-3 rounded-4 bg-secondary bg-opacity-10 @(user.AspNetUser == null ? "border-secondary" : "border-dark")">
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="flex-shrink-0">
+                        <img src="@(string.IsNullOrEmpty(user.ProfileImageUrl) ? "/user.png" : user.ProfileImageUrl)"
+                             class="rounded-circle border bg-white"
+                             style="width:70px;height:70px;object-fit:cover;" />
+                    </div>
+
+                    <div class="flex-grow-1 d-flex flex-column flex-md-row justify-content-between align-items-center">
+                        <div class="w-100">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="fw-bold">@(user.AspNetUser?.FullName ?? "Unknown User")</span>
+                                <span class="badge bg-dark rounded-pill">ID: @user.Id</span>
+                            </div>
+
+                            <div class="text-muted small d-flex flex-wrap gap-2 align-items-center">
+                                <span>📧 @(user.AspNetUser?.Email ?? "No Email")</span>
+                                <span class="opacity-50">|</span>
+                                <span>📍 @user.Region, @user.Nationality</span>
+                                <span class="opacity-50">|</span>
+                                <span>📅 Joined: @user.DateCreated?.ToString("dd MMM yyyy")</span>
+                            </div>
+
+                            <div class="mt-2 text-primary small fw-semibold">
+                                <i class="bi bi-journal-text"></i> Total Listings: @(user.Listings?.Count ?? 0)
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 mt-3 mt-md-0 ms-md-4" style="min-width: 200px;">
+                            <button class="btn btn-sm btn-outline-secondary w-100 rounded-2"
+                                    @onclick="@(() => NavigationManager.NavigateTo($"appusers/details?id={user.Id}"))">
+                                <i class="bi bi-eye me-1"></i> View & Moderate
+                            </button>
+
+                            @if (user.IsBanned == false)
+                            {
+                                <button class="btn btn-outline-danger border-danger rounded-2 btn-sm w-100"
+                                @onclick="@(() => BanUser(user))">
+                                    <i class="bi bi-ban-fill me-1"></i> Ban user
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-success border-success rounded-2 btn-sm w-100"
+                                        @onclick="@(() => UnBanUser(user))">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Unban user
+                                </button>
+                            }
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<AppUser> AppUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    private async Task LoadUsers()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        // We INCLUDE AspNetUser to get the FullName and Email
+
+        var adminRoleId = await context.Roles
+            .Where(r => r.Name == "Administrator")
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        AppUsers = await context.AppUser
+            .Include(u => u.AspNetUser)
+            .Include(u => u.Listings)
+            .Where(u => !context.UserRoles
+            .Any(ur => ur.UserId == u.AspNetUserId && ur.RoleId == adminRoleId))
+            .OrderByDescending(u => u.DateCreated)
+            .ToListAsync();
+    }
+
+    private async Task BanUser(AppUser user)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var appUserEntity = await context.AppUser.FindAsync(user.Id);
+
+        if (appUserEntity != null)
+        {
+            appUserEntity.IsBanned = true;
+            context.AppUser.Update(appUserEntity);
+            await context.SaveChangesAsync();
+
+        }
+
+        var identityUser = await UserManager.FindByIdAsync(user.AspNetUserId);
+        if (identityUser != null)
+        {
+            var currentRoles = await UserManager.GetRolesAsync(identityUser);
+            await UserManager.RemoveFromRolesAsync(identityUser, currentRoles);
+            await UserManager.AddToRoleAsync(identityUser, "Banned");
+            await UserManager.UpdateSecurityStampAsync(identityUser);
+        }
+
+        await LoadUsers();
+        StateHasChanged();
+    }
+
+    private async Task UnBanUser(AppUser user)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var appUserEntity = await context.AppUser.FindAsync(user.Id);
+
+        if (appUserEntity != null)
+        {
+            appUserEntity.IsBanned = false;
+            context.AppUser.Update(appUserEntity);
+            await context.SaveChangesAsync();
+
+        }
+
+        var identityUser = await UserManager.FindByIdAsync(user.AspNetUserId);
+        if (identityUser != null)
+        {
+            var currentRoles = await UserManager.GetRolesAsync(identityUser);
+            await UserManager.RemoveFromRolesAsync(identityUser, currentRoles);
+            await UserManager.AddToRoleAsync(identityUser, "User");
+            await UserManager.UpdateSecurityStampAsync(identityUser);
+        }
+
+        await LoadUsers();
+        StateHasChanged();
+    }
 }

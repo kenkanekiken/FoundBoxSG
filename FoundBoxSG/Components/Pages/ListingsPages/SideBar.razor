@@ -4,14 +4,28 @@
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 
 <div class="col-12 col-md-3 overflow-auto" style="max-height: 100vh">
-    <h6 class="mb-3 px-3">@Listings.Count() found items</h6>
+    <h6 class="mb-3 px-3">@Listings.Count() listings found</h6>
     @foreach (var item in Listings)
     {
         <button class="lost-card mb-3 p-3 rounded text-start w-100 border-0"
                 @onclick="() => OnSelectItem.InvokeAsync(item)">
             <h5 class="mb-1">@item.Title</h5>
             <div>📍 @item.Location</div>
-            <div>@item.ItemCategory</div>
+            <div>
+                @if (item.ListingType == "Lost")
+                {
+                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle me-2">
+                        @item.ListingType
+                    </span>
+                }
+                else
+                {
+                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle me-2">
+                        @item.ListingType
+                    </span>
+                }
+                @item.ItemCategory
+                </div>
             <small class="text-muted">Posted @item.DateCreated</small>
         </button>
     }

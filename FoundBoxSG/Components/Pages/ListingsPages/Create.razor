@@ -6,6 +6,7 @@
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider authenticationStateProvider
+@using System.Security.Claims;
 @rendermode InteractiveServer
 
 <PageTitle>Create</PageTitle>
@@ -120,16 +121,6 @@
                         <InputText id="location" @bind-Value="Listings.Location" class="form-control" />
                         <ValidationMessage For="() => Listings.Location" class="text-danger" />
                     </div>
-                    <div class="mb-3" hidden>
-                        <label for="createdby" class="form-label">CreatedBy:</label> 
-                        <InputText id="createdby" @bind-Value="Listings.CreatedBy" class="form-control" /> 
-                        <ValidationMessage For="() => Listings.CreatedBy" class="text-danger" /> 
-                    </div>        
-                    <div class="mb-3" hidden>
-                        <label for="modifiedby" class="form-label">ModifiedBy:</label> 
-                        <InputText id="modifiedby" @bind-Value="Listings.ModifiedBy" class="form-control" /> 
-                        <ValidationMessage For="() => Listings.ModifiedBy" class="text-danger" /> 
-                    </div>   
                 }
                 <hr />
                 <div class="d-flex justify-content-between">
@@ -164,7 +155,6 @@
 @code {
     [SupplyParameterFromForm]
     private Listings Listings { get; set; } = new();
-    public string imageUri;
     private const int maxFileSize = 5242880;
     private const int maxFiles = 5;
     private List<string> FileErrors = new List<string>();
@@ -256,21 +246,31 @@
 
     private async Task AddListings()
     {
-        using var context = DbFactory.CreateDbContext();
+        try
+        {
+            using var context = DbFactory.CreateDbContext();
 
-        int appUserId = await GetAppUserIntIdAsync();
+            int appUserId = await GetAppUserIntIdAsync();
 
-        //Set the userId to the CreatedBy and UpdatedBy fields
-        Listings.CreatedBy = userId;
-        Listings.ModifiedBy = userId;
-        //Set the DateCreated and DateModified fields to current date and time
-        Listings.DateCreated = DateTime.Now;
-        Listings.DateModified = DateTime.Now;
-        Listings.UserId = appUserId;
+            //Set the userId to the CreatedBy and UpdatedBy fields
+            Listings.CreatedBy = userId;
+            Listings.ModifiedBy = userId;
+            //Set the DateCreated and DateModified fields to current date and time
+            Listings.DateCreated = DateTime.Now;
+            Listings.DateModified = DateTime.Now;
+            Listings.UserId = appUserId;
 
-        context.Listings.Add(Listings);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/listings");
+            context.Listings.Add(Listings);
+            await context.SaveChangesAsync();
+            NavigationManager.NavigateTo("/listings");
+        }
+
+        catch (Exception ex)
+        {
+            FileErrors.Add($"Error creating listing: {ex.Message}");
+            StateHasChanged();
+        }
+
     }
 
     private string userId = "System"; // Replace with actual user identification logic
@@ -283,7 +283,7 @@
         }
         var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var userIdClaim = user.FindFirst("userId");
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim != null)
         {
             userId = userIdClaim.Value;

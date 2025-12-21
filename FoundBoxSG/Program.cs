@@ -12,6 +12,8 @@ builder.Services.AddDbContextFactory<FoundBoxSGContext>(options =>
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
+builder.Services.AddAuthorization();
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add services to the container.
@@ -35,6 +37,11 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.Zero;
+});
+
 builder.Services.AddIdentityCore<FoundBoxSGUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<FoundBoxSGContext>()
@@ -54,9 +61,12 @@ if (!app.Environment.IsDevelopment())
     app.UseMigrationsEndPoint();
 }
 
+
+
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()

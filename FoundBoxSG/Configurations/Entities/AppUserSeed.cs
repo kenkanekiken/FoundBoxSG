@@ -16,7 +16,6 @@ namespace FoundBoxSG.Configurations.Entities
                      ModifiedBy = null,
                      DateCreated = DateTime.Now,
                      DateModified = null,
-                     TotalListings = 1,
                      ProfileImageUrl = "/user.png",
                      Nationality = "Singaporean",
                      Region = "Tampines",
@@ -29,11 +28,22 @@ namespace FoundBoxSG.Configurations.Entities
                      ModifiedBy = null,
                      DateCreated = DateTime.Now,
                      DateModified = null,
-                     TotalListings = 1,
                      ProfileImageUrl = "/user.png",
                      Nationality = "Singaporean",
                      Region = "Bedok",
                      AspNetUserId = "9c5f2b8a-1d6e-3c9b-7a4f-0e1d2c3b4a59"
+                 },
+                 new AppUser 
+                 {
+                     Id = 3,
+                     CreatedBy = "Admin",
+                     ModifiedBy = null,
+                     DateCreated = DateTime.Now,
+                     DateModified = null,
+                     ProfileImageUrl = "/user.png",
+                     Nationality = "Singaporean",
+                     Region = "Singapore",
+                     AspNetUserId = "3781efa7-66dc-47f0-860f-e506d04102e4"
                  }
              );
         }

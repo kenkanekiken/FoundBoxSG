@@ -1,8 +1,13 @@
-﻿namespace FoundBoxSG.Domain
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace FoundBoxSG.Domain
 {
     public class Listings : BaseDomainModel
     {
+        [ForeignKey("User")]
         public int UserId { get; set; }
+
+        public virtual AppUser? User { get; set; }
         public string? ListingType { get; set; } 
         public string? Title { get; set; }
         public string? Description { get; set; }
