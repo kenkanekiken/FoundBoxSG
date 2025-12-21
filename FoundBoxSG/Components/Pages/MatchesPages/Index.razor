@@ -195,13 +195,6 @@ else
     private int FoundCount => UserListings.Count(x => !x.IsClose && string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase));
     private int ClosedCount => UserListings.Count(x => x.IsClose);
 
-    // private IEnumerable<Listings> Filtered =>
-    //     activeTab == ListingTab.Lost
-    //         ? UserListings.Where(x => string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase))
-    //                      .OrderByDescending(x => x.DateCreated)
-    //         : UserListings.Where(x => string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase))
-    //                      .OrderByDescending(x => x.DateCreated);
-
     private IEnumerable<Listings> Filtered =>
     activeTab switch
     {

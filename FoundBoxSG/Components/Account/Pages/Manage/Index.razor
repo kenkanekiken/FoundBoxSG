@@ -58,6 +58,11 @@ else
                     <label for="username" class="form-label">Username</label>
                 </div>
                 <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.FullName" class="form-control" placeholder="Please enter your fullname." />
+                    <label for="fullname" class="form-label">FullName</label>
+                    <ValidationMessage For="() => Input.FullName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
                     <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
                     <label for="phone-number" class="form-label">Phone number</label>
                     <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
@@ -95,6 +100,7 @@ else
     private FoundBoxSGUser? user;
     private string? userProfileImageUri;
     private string? username;
+    private string? fullname;
     private string? phoneNumber;
     private AppUser? CurrentAppUser;
     private List<string> FileErrors = new List<string>();
@@ -127,7 +133,7 @@ else
         }
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
-
+        fullname = user.FullName;
 
         var aspNetUserId = await UserManager.GetUserIdAsync(user);
 
@@ -150,6 +156,7 @@ else
         if (string.IsNullOrEmpty(Input.Nationality)) Input.Nationality = CurrentAppUser.Nationality;
         if (string.IsNullOrEmpty(Input.Region)) Input.Region = CurrentAppUser.Region;
         if (string.IsNullOrEmpty(Input.PhoneNumber)) Input.PhoneNumber = phoneNumber;
+        if (string.IsNullOrEmpty(Input.FullName)) Input.FullName = fullname;
         userProfileImageUri = CurrentAppUser.ProfileImageUrl;
 
         isLoading = false;
@@ -216,6 +223,19 @@ else
             }
             phoneNumber = Input.PhoneNumber;
         }
+        var newFullName = Input.FullName?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(newFullName) && newFullName != user.FullName)
+        {
+            user.FullName = newFullName;
+            var nameUpdate = await UserManager.UpdateAsync(user);
+
+            if (!nameUpdate.Succeeded)
+            {
+                statusMessage = "Error: Failed to update full name.";
+                return;
+            }
+        }
 
         if (CurrentAppUser is not null)
         {
@@ -272,5 +292,10 @@ else
         [StringLength(100)]
         [Display(Name = "Region")]
         public string? Region { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        [Display(Name = "Full name")]
+        public string? FullName { get; set; }
     }
 }
