@@ -41,6 +41,18 @@
                 <div class="bg-black bg-opacity-10 rounded-2 px-1">@FoundCount</div>
             </div>
         </button>
+        @if (isAdmin) 
+        {
+        <button class="fs-6 bg-white border-0 p-0"
+                @onclick="() => SetTab(ListingTab.Closed)">
+            <div class="d-flex align-items-center">
+                <div class="pe-2 @(activeTab == ListingTab.Closed ? "fw-semibold border-bottom border-2 border-dark" : "opacity-50")">
+                    Closed Cases
+                </div>
+                <div class="bg-black bg-opacity-10 rounded-2 px-1">@ClosedCount</div>
+            </div>
+        </button>
+        }
     </div>
 </div>
 
@@ -168,7 +180,7 @@ else
 }
 
 @code {
-    private enum ListingTab { Lost, Found }
+    private enum ListingTab { Lost, Found, Closed }
     private ListingTab activeTab = ListingTab.Lost;
 
     private bool isLoaded;
@@ -179,15 +191,37 @@ else
     private bool showModal;
     private Listings? selected;
 
-    private int LostCount => UserListings.Count(x => string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase));
-    private int FoundCount => UserListings.Count(x => string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase));
+    private int LostCount => UserListings.Count(x => !x.IsClose && string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase));
+    private int FoundCount => UserListings.Count(x => !x.IsClose && string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase));
+    private int ClosedCount => UserListings.Count(x => x.IsClose);
+
+    // private IEnumerable<Listings> Filtered =>
+    //     activeTab == ListingTab.Lost
+    //         ? UserListings.Where(x => string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase))
+    //                      .OrderByDescending(x => x.DateCreated)
+    //         : UserListings.Where(x => string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase))
+    //                      .OrderByDescending(x => x.DateCreated);
 
     private IEnumerable<Listings> Filtered =>
-        activeTab == ListingTab.Lost
-            ? UserListings.Where(x => string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase))
-                         .OrderByDescending(x => x.DateCreated)
-            : UserListings.Where(x => string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase))
-                         .OrderByDescending(x => x.DateCreated);
+    activeTab switch
+    {
+        ListingTab.Lost =>
+            UserListings
+                .Where(x => !x.IsClose && string.Equals(x.ListingType, "Lost", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x => x.DateCreated),
+
+        ListingTab.Found =>
+            UserListings
+                .Where(x => !x.IsClose && string.Equals(x.ListingType, "Found", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x => x.DateCreated),
+
+        ListingTab.Closed =>
+            UserListings
+                .Where(x => x.IsClose)
+                .OrderByDescending(x => x.DateCreated),
+
+        _ => Enumerable.Empty<Listings>()
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -203,11 +237,13 @@ else
 
         if (isAdmin)
         {
-            // Admin sees ALL listings
-            UserListings = await context.Listings.ToListAsync();
+            UserListings = await context.Listings
+                .ToListAsync();
+
             isLoaded = true;
             return;
         }
+
 
 
         // Normal user: map Identity -> AppUser int (nullable safe)
@@ -234,7 +270,7 @@ else
         }
 
         UserListings = await context.Listings
-            .Where(l => l.UserId == appUserId.Value)
+            .Where(l => l.UserId == appUserId.Value && !l.IsClose) 
             .ToListAsync();
 
         isLoaded = true;

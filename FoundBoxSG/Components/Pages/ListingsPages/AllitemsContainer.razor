@@ -32,9 +32,10 @@
 
         AllListings = await context.Listings
             .Include(l => l.User)
-            .Where(l => l.User == null || l.User.IsBanned == false)
+            .Where(l => !l.IsClose && (l.User == null || l.User.IsBanned == false))
             .OrderByDescending(l => l.DateCreated)
             .ToListAsync();
+
 
         SelectedItem = AllListings.FirstOrDefault();
     }
