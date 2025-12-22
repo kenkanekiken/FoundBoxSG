@@ -9,6 +9,7 @@
 @inject UserManager<FoundBoxSGUser> UserManager
 
 @using Microsoft.AspNetCore.Identity
+@attribute [Authorize(Roles = "Administrator")]
 
 <PageTitle>Details</PageTitle>
 
