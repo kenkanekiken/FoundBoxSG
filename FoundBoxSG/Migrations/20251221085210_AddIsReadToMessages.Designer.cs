@@ -4,6 +4,7 @@ using FoundBoxSG.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoundBoxSG.Migrations
 {
     [DbContext(typeof(FoundBoxSGContext))]
-    partial class FoundBoxSGContextModelSnapshot : ModelSnapshot
+    [Migration("20251221085210_AddIsReadToMessages")]
+    partial class AddIsReadToMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,16 +97,16 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = "3781efa7-66dc-47f0-860f-e506d04102e4",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "6596a2a6-d94f-4724-9cb2-f2263be28924",
+                            ConcurrencyStamp = "8634c423-44a2-4660-992d-6323e79fd881",
                             Email = "admin@localhost.com",
                             EmailConfirmed = true,
                             FullName = "Admin User",
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@LOCALHOST.COM",
                             NormalizedUserName = "ADMIN@LOCALHOST.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEK9LgZYGe93WE3UskRsvokPSPp4nSs0zgpfde9OceleZtTT9P33ieTSZ2XmYdgSlUA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHavnjH2++y0SDKsPVBLZh/LKFs3806VFhK3Imt4acuW12ICduHkC24KQi2w/8eCHw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "a1f096cb-0da2-4c65-bdd7-d6d5680055ab",
+                            SecurityStamp = "0d37c0ee-4807-45f3-b732-b7d14934ff64",
                             TwoFactorEnabled = false,
                             UserName = "admin@localhost.com"
                         },
@@ -111,16 +114,16 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = "4b3a8d1e-2f5c-4e7a-9b0d-1f2g3h4i5j6k",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "8d1125ab-4c4d-44bc-a03a-cce21d9ec29a",
+                            ConcurrencyStamp = "a45ad46a-ca4e-4118-900c-44d928bc9a62",
                             Email = "John@localhost.com",
                             EmailConfirmed = true,
                             FullName = "John Kindleson",
                             LockoutEnabled = false,
                             NormalizedEmail = "JOHN@LOCALHOST.COM",
                             NormalizedUserName = "JOHN@LOCALHOST.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMIGoCvexJSoe4l6d1cIbLrhOpoWGGchlZTzy+5iyGjK8SwTH5a/XoyfN9czerapHw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDbhKVUm4cidw5njL6Prc2UMpd99oJp528ViY4ewqKQJzUrbi3FM0Q8pOeMqwMmf7g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "a5197e04-7c96-4c44-8289-031d9e990a24",
+                            SecurityStamp = "c4eb9084-ae7c-499b-b9f7-a503bf168c07",
                             TwoFactorEnabled = false,
                             UserName = "John@localhost.com"
                         },
@@ -128,16 +131,16 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = "9c5f2b8a-1d6e-3c9b-7a4f-0e1d2c3b4a59",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "9714b423-ac5d-47d2-a267-95529e64aa9a",
+                            ConcurrencyStamp = "fca479a0-5685-4c6d-8cb4-5201e83eb8a0",
                             Email = "Jane@localhost.com",
                             EmailConfirmed = true,
                             FullName = "Jane Kindleberry",
                             LockoutEnabled = false,
                             NormalizedEmail = "JANE@LOCALHOST.COM",
                             NormalizedUserName = "JANE@LOCALHOST.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEC4MhD/xmpvPtbzkSN7sg0Tlpb1FH2lxGfeU1nSshehuUycGo8G5RoiFJlteqPYvyg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFj+SG3BznwmJgUzX6bCBY9eS9aUKdZiRA1Pd4+7RG/3m9TKKYzMBnRaXgGvdFGRNQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "c21d645d-8252-486e-9634-8569d55a5c0f",
+                            SecurityStamp = "a19d4734-ddfa-4187-a1c1-56a71310e5be",
                             TwoFactorEnabled = false,
                             UserName = "Jane@localhost.com"
                         });
@@ -192,7 +195,7 @@ namespace FoundBoxSG.Migrations
                             Id = 1,
                             AspNetUserId = "4b3a8d1e-2f5c-4e7a-9b0d-1f2g3h4i5j6k",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(944),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6754),
                             IsBanned = false,
                             Nationality = "Singaporean",
                             ProfileImageUrl = "/user.png",
@@ -203,7 +206,7 @@ namespace FoundBoxSG.Migrations
                             Id = 2,
                             AspNetUserId = "9c5f2b8a-1d6e-3c9b-7a4f-0e1d2c3b4a59",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(990),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6756),
                             IsBanned = false,
                             Nationality = "Singaporean",
                             ProfileImageUrl = "/user.png",
@@ -214,7 +217,7 @@ namespace FoundBoxSG.Migrations
                             Id = 3,
                             AspNetUserId = "3781efa7-66dc-47f0-860f-e506d04102e4",
                             CreatedBy = "Admin",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(992),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6758),
                             IsBanned = false,
                             Nationality = "Singaporean",
                             ProfileImageUrl = "/user.png",
@@ -252,9 +255,6 @@ namespace FoundBoxSG.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsClose")
-                        .HasColumnType("bit");
-
                     b.Property<string>("ItemCategory")
                         .HasColumnType("nvarchar(max)");
 
@@ -289,10 +289,9 @@ namespace FoundBoxSG.Migrations
                             Brand = "N/A",
                             Color = "Silver and Red",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(525),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6390),
                             Description = "Set of car keys with a red keychain",
                             Images = "[]",
-                            IsClose = false,
                             ItemCategory = "Keys",
                             ListingType = "Found",
                             Location = "Marina Bay Sands",
@@ -306,10 +305,9 @@ namespace FoundBoxSG.Migrations
                             Brand = "Gucci",
                             Color = "Black",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(547),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6405),
                             Description = "Black leather wallet",
                             Images = "[]",
-                            IsClose = false,
                             ItemCategory = "Wallet",
                             ListingType = "Lost",
                             Location = "Orchard Road",
@@ -354,7 +352,7 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 1,
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(800),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6607),
                             ListingId = 1,
                             MatcherUserId = 2
                         },
@@ -362,7 +360,7 @@ namespace FoundBoxSG.Migrations
                         {
                             Id = 2,
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(802),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6610),
                             ListingId = 2,
                             MatcherUserId = 1
                         });
@@ -410,7 +408,7 @@ namespace FoundBoxSG.Migrations
                             Id = 1,
                             Content = "Hello! Is this item still available?",
                             CreatedBy = "John",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(874),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6689),
                             IsRead = false,
                             MatchId = 1,
                             SenderUserId = 2
@@ -420,7 +418,7 @@ namespace FoundBoxSG.Migrations
                             Id = 2,
                             Content = "Yes, it is still available. Would you like to arrange a pickup?",
                             CreatedBy = "Jane",
-                            DateCreated = new DateTime(2025, 12, 21, 23, 16, 10, 446, DateTimeKind.Local).AddTicks(876),
+                            DateCreated = new DateTime(2025, 12, 21, 16, 52, 9, 569, DateTimeKind.Local).AddTicks(6691),
                             IsRead = false,
                             MatchId = 2,
                             SenderUserId = 1

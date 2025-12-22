@@ -1,38 +1,234 @@
 ﻿@using FoundBoxSG.Domain
 @using FoundBoxSG.Data
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject UserManager<FoundBoxSGUser> UserManager
+@inject NavigationManager NavigationManager
 
 <div class="col-12 col-md-3 overflow-auto" style="max-height: 100vh">
     <h6 class="mb-3 px-3">@Listings.Count() listings found</h6>
+
     @foreach (var item in Listings)
     {
-        <button class="lost-card mb-3 p-3 rounded text-start w-100 border-0"
+        <!-- DESKTOP button -->
+        <button class="lost-card mb-3 p-3 rounded text-start w-100 border-0 d-none d-md-block"
                 @onclick="() => OnSelectItem.InvokeAsync(item)">
-            <h5 class="mb-1">@item.Title</h5>
-            <div>📍 @item.Location</div>
-            <div>
-                @if (item.ListingType == "Lost")
-                {
-                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle me-2">
-                        @item.ListingType
-                    </span>
-                }
-                else
-                {
-                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle me-2">
-                        @item.ListingType
-                    </span>
-                }
-                @item.ItemCategory
-                </div>
-            <small class="text-muted">Posted @item.DateCreated</small>
+            @CardContent(item)
+        </button>
+
+        <!-- MOBILE button -->
+        <button class="lost-card mb-3 p-3 rounded text-start w-100 border-0 d-block d-md-none"
+                @onclick="() => OpenModal(item)">
+            @CardContent(item)
         </button>
     }
 </div>
+
+<!-- MOBILE MODAL -->
+@if (showModal && selected is not null)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-4">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+
+                <div class="modal-body">
+                    @* <h2 class=" mb-2">@selected.Title</h2> *@
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        @if (!string.IsNullOrWhiteSpace(PosterProfileImageUri))
+                        {
+                            <img src="@PosterProfileImageUri"
+                                 class="rounded-circle"
+                                 style="width:48px;height:48px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center"
+                                 style="width:48px;height:48px;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        }
+
+                        <div>
+                            <h2 class="mb-0">@selected.Title</h2>
+                        </div>
+                    </div>
+
+                    <div class="d-inline-block mb-1">
+                        @if (selected.ListingType == "Lost")
+                        {
+                            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle me-2">
+                                @selected.ListingType
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle me-2">
+                                @selected.ListingType
+                            </span>
+                        }
+                        <div class="fw-bold d-inline-block">@selected.ItemCategory</div>
+                    </div>
+                    <div class="">📍 @selected.Location</div>
+                    <div class=""><small class="text-muted">Posted @selected.DateCreated</small></div>
+                    @if (!string.IsNullOrWhiteSpace(PosterName))
+                    {
+                        <div class="text-muted">by @PosterName</div>
+                    }
+
+                    <div class="py-3">
+                        <!-- Change the button's onclick to pass the required listingId parameter -->
+                        @if (selected is not null && selected.UserId != appUserId)
+                        {
+                            <button class="btn btn-dark" @onclick="() => ClaimItem(selected!.Id)">
+                                Chat now
+                            </button>
+                        }
+
+                    </div>
+                    @if (selected.Images?.Any() == true)
+                    {
+                        <div class="mb-3">
+                            <div class="fw-semibold mb-2">Images</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var img in selected.Images)
+                                {
+                                    <img src="@img" style="width:140px;height:140px;object-fit:cover;"
+                                         class="rounded-3 border" />
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="pt-4">Item description</div>
+                    <div class="border"></div>
+
+                    <div class="pt-3 fw-bold">ID: @selected.Id</div>
+
+                    <div class="pt-3 fw-bold">Brand: @selected.Brand</div>
+
+                    <div class="pt-3 fw-bold">Color: @selected.Color</div>
+
+                    <div class="pt-3 fw-bold">Unqiue Feature: @selected.UniqueFeatures</div>
+                    <div class="pt-3 fw-bold mb-2">Description</div>
+                    <div>@selected.Description</div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 
 @code {
     [Parameter] public IEnumerable<Listings> Listings { get; set; }
     [Parameter] public EventCallback<Listings> OnSelectItem { get; set; }
+    private Listings? selected;
+    private bool showModal;
+    private int appUserId;
+    private string? PosterProfileImageUri;
+    private string? PosterName;
+    private async Task OpenModal(Listings item)
+    {
+        selected = item;
+        showModal = true;
+
+        await using var context = await DbFactory.CreateDbContextAsync();
+        var auth = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var aspNetUserId = auth.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(aspNetUserId)) return;
+
+        appUserId = await context.AppUser
+            .Where(u => u.AspNetUserId == aspNetUserId)
+            .Select(u => u.Id)
+            .SingleOrDefaultAsync();
+
+        // (optional) poster info
+        var posterAppUser = await context.AppUser
+            .Where(u => u.Id == selected.UserId)
+            .Select(u => new { u.AspNetUserId, u.ProfileImageUrl })
+            .SingleOrDefaultAsync();
+
+        PosterProfileImageUri = posterAppUser?.ProfileImageUrl;
+
+        if (!string.IsNullOrWhiteSpace(posterAppUser?.AspNetUserId))
+        {
+            var posterIdentityUser = await UserManager.FindByIdAsync(posterAppUser.AspNetUserId);
+            PosterName = posterIdentityUser?.FullName ?? posterIdentityUser?.UserName ?? "User";
+        }
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        selected = null;
+    }
+
+    private RenderFragment CardContent(Listings item) =>@<div>
+    <h5 class="mb-1">@item.Title</h5>
+    <div>📍 @item.Location</div>
+    <div>
+        @if (item.ListingType == "Lost")
+                {
+        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle me-2">
+            @item.ListingType
+        </span>
+                }
+                else
+                {
+        <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle me-2">
+            @item.ListingType
+        </span>
+                }
+        @item.ItemCategory
+    </div>
+    <small class="text-muted">Posted @item.DateCreated</small>
+    </div>;
+
+    private async Task ClaimItem(int listingId)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        var auth = (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var aspNetUserId = auth.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        var myAppUserId = await context.AppUser
+            .Where(u => u.AspNetUserId == aspNetUserId)
+            .Select(u => u.Id)
+            .SingleAsync();
+
+        var listing = await context.Listings.FirstAsync(l => l.Id == listingId);
+
+        if (listing.UserId == myAppUserId)
+            return; // or show message: can't claim own listing
+
+        var match = await context.Matches.FirstOrDefaultAsync(m =>
+            m.ListingId == listingId && m.MatcherUserId == myAppUserId);
+
+        if (match == null)
+        {
+            match = new Matches
+            {
+                ListingId = listingId,
+                MatcherUserId = myAppUserId,
+                DateCreated = DateTime.Now,
+                DateModified = DateTime.Now
+            };
+            context.Matches.Add(match);
+            await context.SaveChangesAsync();
+        }
+
+        NavigationManager.NavigateTo($"/messages?matchId={match.Id}");
+    }
 }

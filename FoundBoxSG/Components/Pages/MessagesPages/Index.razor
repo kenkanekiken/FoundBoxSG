@@ -43,7 +43,7 @@ else
             <div class="col-12 p-3 rounded-4 bg-secondary bg-opacity-10 text-start"
             role="button"
             style="cursor:pointer;"
-            @onclick="() => OpenChat(chat.MatchId)">
+            @onclick="() => OpenChat(chat.MatchId, chat.ListingOwnerId)">
 
                 <div class="d-flex align-items-center gap-3">
                     <!-- Left circle icon -->
@@ -72,13 +72,16 @@ else
                         </div>
 
                         <!-- Close case -->
-                        <div class="text-md-end mt-2 mt-md-0">
-                            <button class="btn btn-sm btn-outline-secondary"
-                                    @onclick:stopPropagation="true"
-                                    @onclick="() => CloseCase(chat.MatchId)">
-                                Close Case
-                            </button>
+                        <div class="text-md-end mt-2 mt-md-0" @onclick:stopPropagation="true">
+                            @if (myAppUserId > 0 && chat.ListingOwnerId == myAppUserId)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        @onclick="() => CloseCase(chat.MatchId)">
+                                    Close Case
+                                </button>
+                            }
                         </div>
+
                     </div>
                 </div>
 
@@ -143,10 +146,6 @@ else
                         }
                     }
                 </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
-                </div>
             </div>
         </div>
     </div>
@@ -158,6 +157,8 @@ else
     private int myAppUserId;
     private string? _error;
     private string? OtherUserName;
+    private int selectedMatchId;
+    private int selectedListingOwnerId;
 
     private List<ChatRow> Chats = new();
 
@@ -175,6 +176,7 @@ else
         public int MatchId { get; set; }
         public int ListingId { get; set; }
         public string? ListingTitle { get; set; }
+        public int ListingOwnerId { get; set; }
         public int OtherUserId { get; set; }
         public DateTime? LastUpdated { get; set; }
         public string? OtherUserProfileImageUrl { get; set; }
@@ -209,6 +211,7 @@ else
                         m => m.ListingId,
                         l => l.Id,
                         (m, l) => new { m, l })
+                    .Where(x => !x.l.IsClose) 
                     .Join(context.AppUser, x => x.m.MatcherUserId, u => u.Id, (x, u) => new { x.m, x.l, u })
                     .Join(context.Users,
                       combined => combined.u.AspNetUserId,
@@ -217,14 +220,16 @@ else
                       {
                           MatchId = combined.m.Id,
                           ListingId = combined.l.Id,
+                          ListingOwnerId = combined.l.UserId,
                           ListingTitle = combined.l.Title ?? "(No title)",
                           OtherUserId = combined.u.Id,
                           LastUpdated = combined.m.DateModified ?? combined.m.DateCreated,
                           OtherUserProfileImageUrl = combined.u.ProfileImageUrl,
-                          OtherUserName = identity.FullName // Now you have the name!
+                          OtherUserName = identity.FullName
                       })
                     .OrderByDescending(x => x.LastUpdated)
                     .ToListAsync();
+
 
                 isLoaded = true;
                 return;
@@ -241,12 +246,13 @@ else
             // A. Chats where the current user is the LISTING OWNER (The other user is the Matcher)
             var asListingOwner = context.Matches
             .Join(context.Listings, m => m.ListingId, l => l.Id, (m, l) => new { m, l })
-            .Where(x => x.l.UserId == myAppUserId)
+            .Where(x => x.l.UserId == myAppUserId && !x.l.IsClose)
             .Join(context.AppUser, x => x.m.MatcherUserId, u => u.Id, (x, u) => new { x.m, x.l, u })
             .Join(context.Users, c => c.u.AspNetUserId, i => i.Id, (c, i) => new ChatRow
             {
                 MatchId = c.m.Id,
                 ListingId = c.l.Id,
+                ListingOwnerId = c.l.UserId,
                 ListingTitle = c.l.Title,
                 OtherUserId = c.u.Id,
                 LastUpdated = c.m.DateModified ?? c.m.DateCreated,
@@ -256,11 +262,13 @@ else
             var asMatcher = context.Matches
             .Where(m => m.MatcherUserId == myAppUserId)
             .Join(context.Listings, m => m.ListingId, l => l.Id, (m, l) => new { m, l })
+            .Where(x => !x.l.IsClose) 
             .Join(context.AppUser, x => x.l.UserId, u => u.Id, (x, u) => new { x.m, x.l, u })
             .Join(context.Users, c => c.u.AspNetUserId, i => i.Id, (c, i) => new ChatRow
             {
                 MatchId = c.m.Id,
                 ListingId = c.l.Id,
+                ListingOwnerId = c.l.UserId,
                 ListingTitle = c.l.Title,
                 OtherUserId = c.u.Id,
                 LastUpdated = c.m.DateModified ?? c.m.DateCreated,
@@ -283,8 +291,10 @@ else
     }
 
     // ✅ This is the "admin popup vs user navigate" behaviour you want
-    private async Task OpenChat(int matchId)
+    private async Task OpenChat(int matchId, int listingOwnerId)
     {
+        selectedMatchId = matchId;
+
         if (isAdmin)
         {
             await ViewChatModal(matchId); // popup modal
@@ -350,8 +360,47 @@ else
         modalHeaderTitle = "Chat";
     }
 
-    private void CloseCase(int matchId)
+    private async Task CloseCase(int matchId)
     {
-        // TODO: implement later (status column etc.)
+        try
+        {
+            await using var context = await DbFactory.CreateDbContextAsync();
+
+            var match = await context.Matches
+                .FirstOrDefaultAsync(m => m.Id == matchId);
+
+            if (match is null)
+                return;
+
+            var listing = await context.Listings
+                .FirstOrDefaultAsync(l => l.Id == match.ListingId);
+
+            if (listing is null)
+                return;
+
+            // 🔒 AUTHORIZATION CHECK
+            if (listing.UserId != myAppUserId)
+            {
+                // Not the owner → do nothing (or log)
+                return;
+            }
+
+            listing.IsClose = true;
+
+            match.DateModified = DateTime.Now;
+
+            await context.SaveChangesAsync();
+
+            Chats = Chats
+                .Where(c => c.MatchId != matchId)
+                .ToList();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.ToString();
+        }
     }
+
 }

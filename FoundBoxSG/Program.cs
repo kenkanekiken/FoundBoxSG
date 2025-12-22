@@ -1,10 +1,11 @@
 ﻿using FoundBoxSG.Components;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using FoundBoxSG.Data;
 using FoundBoxSG.Components.Account;
+using FoundBoxSG.Data;
+using FoundBoxSG.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContextFactory<FoundBoxSGContext>(options =>
@@ -29,6 +30,9 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+
+builder.Services.AddScoped<EmailService>();
+
 
 builder.Services.AddAuthentication(options =>
     {
