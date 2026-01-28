@@ -231,31 +231,37 @@
         var receiverIdentityUser =
             await UserManager.FindByIdAsync(receiverAspNetUserId);
 
-        if (!string.IsNullOrWhiteSpace(receiverIdentityUser?.Email))
+        try
         {
-            var chatUrl = NavigationManager.BaseUri + "messages/chat/" + matchId;
+            if (!string.IsNullOrWhiteSpace(receiverIdentityUser?.Email))
+            {
+                var body =
+                    "<p>Hello " + receiverIdentityUser.UserName + ",</p>" +
+                    "<p>You have received a new message regarding:</p>" +
+                    "<p><b>" + listing.Title + "</b></p>" +
+                    "<p>— FoundBox Team</p>";
 
-            var body =
-                "<p>Hello " + receiverIdentityUser.UserName + ",</p>" +
-                "<p>You have received a new message regarding:</p>" +
-                "<p><b>" + listing.Title + "</b></p>" +
-                "<p>— FoundBox Team</p>";
+                await EmailService.SendAsync(
+                    receiverIdentityUser.Email,
+                    "📩 New message on FoundBox",
+                    body
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("EMAIL FAILED: " + ex.Message);
+        }
+        finally
+        {
+            msgs = await context.Messages
+                .Where(m => m.MatchId == matchId)
+                .OrderBy(m => m.DateCreated)
+                .ToListAsync();
 
-            Console.WriteLine("EMAIL SEND ATTEMPT");
-
-            await EmailService.SendAsync(
-                receiverIdentityUser.Email,
-                "📩 New message on FoundBox",
-                body
-            );
-            Console.WriteLine("EMAIL SENT OK");
-
+            await InvokeAsync(StateHasChanged);
         }
 
-        msgs = await context.Messages
-            .Where(m => m.MatchId == matchId)
-            .OrderBy(m => m.DateCreated)
-            .ToListAsync();
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
