@@ -4,6 +4,9 @@
 @using FoundBoxSG.Domain
 @inject IDbContextFactory<FoundBoxSG.Data.FoundBoxSGContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthProvider
+@attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
 
 <PageTitle>Details</PageTitle>
 
@@ -148,11 +151,29 @@ else
                                 </div>
                             </div>
 
+                            <div class="d-flex gap-2">
                             <a class="btn btn-sm btn-outline-primary"
                                href="@($"/listings/details?id={listing.Id}")">
                                 View
                                 <i class="bi bi-chevron-right ms-1"></i>
                             </a>
+                            @if (!listing.IsClose)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => ToggleListingStatus(listing, true)">
+                                            <i class="bi bi-x-circle me-1"></i> Close Listing
+                                        </button>
+                                        
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-success"
+                                                @onclick="() => ToggleListingStatus(listing, false)">
+                                            <i class="bi bi-check-circle me-1"></i> Reopen Listing
+                                        </button>
+                                    }
+
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,6 +221,38 @@ else
             .Where(l => l.UserId == appuser.Id)
             .OrderByDescending(l => l.DateCreated)
             .ToListAsync();
+    }
+    private async Task ToggleListingStatus(Listings listing, bool shouldClose)
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Administrator"))
+        {
+            return; // Block the action if they aren't actually an admin anymore
+        }
+        try
+        {
+            await using var context = await DbFactory.CreateDbContextAsync();
+
+            // Re-fetch from DB to ensure we have the tracked entity
+            var listingEntity = await context.Listings.FindAsync(listing.Id);
+
+            if (listingEntity != null)
+            {
+                listingEntity.IsClose = shouldClose;
+                listingEntity.DateModified = DateTime.Now;
+
+                await context.SaveChangesAsync();
+
+                // Update local state so UI refreshes immediately
+                listing.IsClose = shouldClose;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            // You might want to add a private string _error field to display this
+            Console.WriteLine($"Error updating listing status: {ex.Message}");
+        }
     }
 }
 
